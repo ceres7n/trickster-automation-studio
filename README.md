@@ -136,6 +136,16 @@ docs/           DEVELOPMENT_NOTES.md: how each part was reversed, built and veri
 3rdparty/imgui  Dear ImGui (MIT, see its LICENSE.txt)
 ```
 
+## License
+
+Copyright (C) 2026 ceres7n
+
+Trickster Automation Studio is free software: you can redistribute it and/or modify it under the
+terms of the **GNU General Public License v3.0** (or, at your option, any later version), as
+published by the Free Software Foundation. It comes with no warranty. See [LICENSE](LICENSE).
+
+`3rdparty/imgui` keeps its own MIT license (`3rdparty/imgui/LICENSE.txt`).
+
 ## Credits
 
 - [Dear ImGui](https://github.com/ocornut/imgui) by Omar Cornut and contributors (MIT).
