@@ -1,0 +1,20 @@
+# build output
+/build/
+/bin/
+*.i64
+__pycache__/
+*.pyc
+
+# local settings
+/tas.ini
+
+# game assets / data: never published (bring your own)
+/conf/
+/data/icons/
+*.md3
+*.nri
+*.pal
+
+# private tools and art (the client's asset key, the game-art icon)
+/tools/private/
+/res/private/

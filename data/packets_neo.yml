@@ -1,0 +1,970 @@
+# =============================================================================
+#   Trickster Automation Studio packet overlay  (PACKETS_NEO)
+# =============================================================================
+#
+#   Loaded AFTER packets_db.yml: an entry with the same Dir + Id replaces the
+#   keys it sets (Name / Fields / Note / Handler), the rest is inherited.
+#   Only VERIFIED knowledge goes here (memory kto-* notes, client RE, the
+#   ProjectPAULA handlers). Source says where each entry came from.
+#
+#   Fields  - 'type name' items, in wire order (name optional):
+#     u8 u16 u32 u64 i8 i16 i32 i64 f32
+#     str        NUL-terminated (CP949)     strN   fixed N bytes, NUL-padded
+#     blobN      N raw bytes                equipset234 = blob234
+#     tuple      (u32,u16,u8)               rest   every remaining byte
+#     N*{a,b}    loop, N = the previous integer field
+#     5*{a,b}    loop, fixed count          rest*{a,b}  loop to the end
+#
+#   C2S entries below the S2C block are generated from ProjectPAULA's
+#   game_session.cpp dispatch + the linear pkt.read<T>() sequence of each
+#   handler (branchy handlers keep only the name; their reads are in Note).
+# =============================================================================
+
+Header:
+  Type: PACKETS_NEO
+  Version: 1
+
+Body:
+# ---- Server -> Client (verified) ----
+  - Id: 6
+    Dir: S2C
+    Name: 'ENTITY_LEAVE_WARP'
+    Note: 'logout leave (etc_warp effect)'
+    Source: 'memory kto-remote-player-appear'
+  - Id: 7
+    Dir: S2C
+    Name: 'ENTITY_APPEAR_LOGIN'
+    Fields: ['u16 entityId', 'u16 kind', 'u16 species', 'u8 job', 'u8 flag', 'u16 extra', 'u32 stateFlags', 'rest']
+    Note: 'login warp-in (self skips it); same body as op 8 -> sub_6F02B0. rest = packed pos x2, cstr name, appearance blob'
+    Source: 'memory kto-remote-player-appear'
+  - Id: 8
+    Dir: S2C
+    Name: 'ENTITY_APPEAR'
+    Fields: ['u16 entityId', 'u16 kind', 'u16 species', 'u8 job', 'u8 flag', 'u16 extra', 'u32 stateFlags', 'rest']
+    Note: 'kind 1 = PC, 2 = NPC, 3 = Monster, 4 = pet, 5 = shop NPC, 14 = skill master. rest = packed pos x2, cstr name, appearance blob (byte3 = move speed)'
+    Source: 'memory kto-remote-player-appear / kto-entity-spawn'
+  - Id: 9
+    Dir: S2C
+    Name: 'ENTITY_APPEAR_ZONE'
+    Fields: ['u16 entityId', 'u16 kind', 'u16 species', 'u8 job', 'u8 flag', 'u16 extra', 'u32 stateFlags', 'rest']
+    Note: 'zone enter / respawn, appears with an effect; same body as op 8'
+    Source: 'memory kto-remote-player-appear'
+  - Id: 10
+    Dir: S2C
+    Name: 'ITEM_APPEAR'
+    Note: 'ground item (op 10/11 -> sub_6F04A0)'
+    Source: 'memory kto-drops'
+  - Id: 15
+    Dir: S2C
+    Name: 'ENTITY_REMOVE'
+    Fields: ['u16 entityId', 'u8']
+    Note: 'despawn: actor event 15, no effect (also corpse + picked-up item removal)'
+    Source: 'memory kto-remote-player-appear'
+  - Id: 21
+    Dir: S2C
+    Name: 'FIELD_CHANGE_LEAVE'
+    Source: 'memory kto-remote-player-appear'
+  - Id: 31
+    Dir: S2C
+    Name: 'MELEE_SWING'
+    Note: 'command-block opener of a melee swing {0x1F,0x2A,0x11E,+0x2B}'
+    Source: 'memory kto-command-block / kto-combat'
+  - Id: 472
+    Dir: S2C
+    Name: 'SPEED'
+    Fields: ['u16 entityId', 'u8 speedDiv4']
+    Note: 'current move speed = 4 * byte (actor+120), sent to the area before a move when it changes'
+    Source: 'memory kto-battle-follow (client sub_499010 case 472)'
+  - Id: 64
+    Dir: S2C
+    Name: 'SIT_STATE'
+    Fields: ['u16 entityId', 'u8 state']
+    Note: '0 stand, 2 sit, 13 rest'
+    Source: 'memory kto-sit-rest'
+  - Id: 184
+    Dir: S2C
+    Name: 'MONSTER_SPEECH'
+    Fields: ['u16 entityId', 'str text']
+    Source: 'memory kto-monster-speech'
+  - Id: 231
+    Dir: S2C
+    Name: 'INVENTORY_LIST'
+    Note: 'login item list'
+    Source: 'memory kto-pickup-inventory'
+  - Id: 233
+    Dir: S2C
+    Name: 'CHAR_STATS'
+    Note: 'login block (money @+14, wh slots @+57); client Handle_S2C_0x00E9_CharStats'
+    Source: 'memory kto-client-s2c-dispatchers / kto-pickup-inventory'
+  - Id: 235
+    Dir: S2C
+    Name: 'MONSTER_QUEST_LIST'
+    Fields: ['u16 n', 'N*{u16 qid,u16 monster,u8 run,u8 grade,u16 kills,u32 record}']
+    Note: 'login / map change: only a done quest survives a relog (record > 0); NOT the skill list (that is 271)'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 210
+    Dir: S2C
+    Name: 'MONQ_TAKEN'
+    Fields: ['u16 qid', 'u16 monster', 'u8 grade', 'u8 run', 'u16 kills', 'u32 record', 'str name', 'str client', 'str pos', 'str comment']
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 211
+    Dir: S2C
+    Name: 'MONQ_REMOVED'
+    Fields: ['u16 qid']
+    Note: 'handed in, or lost (time out / death before the kills were done)'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 215
+    Dir: S2C
+    Name: 'MONQ_TIMER'
+    Fields: ['u32 remainMs', 'u32 totalMs']
+    Note: 'every second while the quest runs'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 216
+    Dir: S2C
+    Name: 'MONQ_TIMEOUT'
+    Fields: ['u16 qid']
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 217
+    Dir: S2C
+    Name: 'MONQ_KILLS'
+    Fields: ['u16 kills', 'u16 target']
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 218
+    Dir: S2C
+    Name: 'MONQ_SUCCESS'
+    Fields: ['u16 qid', 'u8 hasReturnMap']
+    Note: 'all killed; with a return map the client offers the portal (C2S 1040)'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 219
+    Dir: S2C
+    Name: 'MONQ_COMPLETED'
+    Fields: ['u16 records', 'rest']
+    Note: 'records x bag record, u16 m x {u32 item, u16 count}, u32 exp, u32 tmExp, u16 qid, u32 gelder'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 1041
+    Dir: S2C
+    Name: 'MONQ_RETURN_OK'
+    Note: 'the field change to the ReturnMapID comes in 500 ms'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 1042
+    Dir: S2C
+    Name: 'MONQ_RETURN_CANCEL'
+    Source: 'client sub_6F0960 + ProjectPAULA monster_quest.cpp'
+  - Id: 271
+    Dir: S2C
+    Name: 'SKILL_LIST'
+    Fields: ['u16 count', 'N*{u16 skillId,u8 level,u16}']
+    Source: 'memory kto-skill-list-op235'
+  - Id: 592
+    Dir: S2C
+    Name: 'PET_SPEECH'
+    Fields: ['u16', 'str text', 'u32', 'str voice']
+    Source: 'memory kto-pet-speech (KR layout)'
+  - Id: 679
+    Dir: S2C
+    Name: 'CHAR_APPEARANCE'
+    Note: 'char-select appearance blob (0x45 bytes copied to GameWorld+10440)'
+    Source: 'memory kto-client-s2c-dispatchers'
+  - Id: 1951
+    Dir: S2C
+    Name: 'CMD_BLOCK_CLOSE'
+    Note: 'closes a command block (header block id != 0 groups packets until this)'
+    Source: 'memory kto-command-block'
+  - Id: 7016
+    Dir: S2C
+    Name: 'PARTY_INVITE_DIALOG'
+    Note: 'packets_db/kto_opcodes called it CHAR_STAT - wrong, it is the party-invite dialog'
+    Source: 'memory verify-s2c-opcodes-in-client'
+  - Id: 11502
+    Dir: S2C
+    Name: 'LOGIN_ISLAND_LIST'
+    Note: 'u32 + u64 auth + u8 n + n x 75-byte island rows (name +38); n == 2 = nameless two-world window'
+    Source: 'memory kto-server-select'
+  - Id: 11506
+    Dir: S2C
+    Name: 'RESERVE_WORLD_ACK'
+    Fields: ['str16 ip', 'u16 port']
+    Source: 'memory kto-server-select'
+  - Id: 11507
+    Dir: S2C
+    Name: 'RESERVE_WORLD_NAK'
+    Fields: ['u32 code']
+    Source: 'memory kto-server-select'
+# drilling (memory kto-drill; client: the avatar's state 5, sub_6B4240 / sub_6B4600 / sub_6B4E00 case 5)
+  - Id: 14
+    Dir: S2C
+    Name: 'ITEM_POP_UP'
+    Fields: ['u16 digger', 'u16 objectId', 'u16 x', 'u16 y', 'u16 fromX', 'u16 fromY', 'u16', 'u8', 'u8', 'u8', 'u8 kind', 'u32 itemId', 'u64 uid', 'u16 count', 'rest']
+    Note: 'a drill find flies out of the hole; owned by the digger 30 s (drop.cpp pop_up_item)'
+    Source: 'ProjectPAULA drop.cpp pop_up_item'
+  - Id: 45
+    Dir: S2C
+    Name: 'DRILL_OK'
+    Note: 'empty: the dig is on, the client enters its state 5 (sub_49EC70(5); the same state = no-op)'
+    Source: 'client sub_6B4E00 case 0x2D'
+  - Id: 46
+    Dir: S2C
+    Name: 'DRILL_REFUSED'
+    Note: 'empty: no drill in slot 7 / a condition'
+    Source: 'ProjectPAULA drill.cpp handle_drill_start'
+  - Id: 47
+    Dir: S2C
+    Name: 'DRILL_INFO_AREA'
+    Fields: ['u16 digger', 'u16 x', 'u16 y', 'u8 form', 'u8 mapDepth5', 'u8 itemDepth5', 'u8 nature', 'u8 hasPS6']
+    Note: 'to the area: another player dig starts (depths / 5, 0 = no item)'
+    Source: 'ProjectPAULA drill.cpp drill_on_stop_move'
+  - Id: 50
+    Dir: S2C
+    Name: 'DRILL_STOP'
+    Fields: ['u8 reason', 'u16 life', 'u32 itemId']
+    Note: 'reasons 1 cancel, 2/9 nothing, 3 dug out, 4 too deep, 6 no life, 7 not diggable, 8/19 CDM find, 10 hit; 11-14 CDM [secs in life], 15 no CDM map, 16-18 CDM over'
+    Source: 'client sub_6B4600 + ProjectPAULA drill.cpp drill_stop'
+  - Id: 51
+    Dir: S2C
+    Name: 'DRILL_STOP_AREA'
+    Fields: ['u16 digger', 'u8 reason']
+    Source: 'ProjectPAULA drill.cpp drill_stop'
+  - Id: 371
+    Dir: S2C
+    Name: 'DRILL_INFO'
+    Fields: ['u16 me', 'u16 x', 'u16 y', 'u8 form', 'u8 mapDepth5', 'u8 itemDepth5', 'u8 nature', 'u16 seedSensed', 'u8 cdmGauge']
+    Note: 'our dig starts: the item depth / 5 (0 = none) whatever the sense roll; seed | sensed bit keys C2S 49 CRC'
+    Source: 'client sub_6B4E00 case 5 / 371 + ProjectPAULA drill.cpp'
+  - Id: 1074
+    Dir: S2C
+    Name: 'CDM_BIGBANG'
+    Fields: ['u32 n', 'u16 digger', 'rest']
+    Note: 'n x {u16 objectId, u16 fromX, u16 fromY, u16 x, u16 y, item body} + u8 wedding'
+    Source: 'ProjectPAULA drop.cpp bigbang_drop'
+  - Id: 112
+    Dir: S2C
+    Name: 'NPC_DIALOG_OPEN'
+    Fields: ['u16 npc', 'u16 npcType', 'u8 msgCount', 'str message', 'u16 subType', 'u16 showboard']
+    Note: 'the first message picked by the PreCheck (its number is not sent: the text + options); str only when msgCount > 0'
+    Source: 'ProjectPAULA npc_talk.cpp send_npc_talk (verified in the client there)'
+  - Id: 115
+    Dir: S2C
+    Name: 'NPC_MESSAGE'
+    Fields: ['u16 npc', 'u16 index', 'str message', 'u16 stype', 'u16 qid']
+    Note: 'the next message: a C2S 114 answer, or a script call result r >= 1 = its r-th argument (index 128.. = q-message)'
+    Source: 'ProjectPAULA npc_talk.cpp send_npc_message (verified in the client there)'
+  - Id: 116
+    Dir: S2C
+    Name: 'NPC_MESSAGE_CANCEL'
+    Fields: ['rest']
+    Note: 'empty (a script error / a DB refusal) or [u16 npc][u16 index] (no such message)'
+    Source: 'ProjectPAULA npc_talk.cpp'
+  - Id: 132
+    Dir: S2C
+    Name: 'QUEST_TAKEN'
+    Fields: ['u32 qid', 'u16 run', 'str name', 'str client', 'str pos', 'str comment', 'u16 qid2']
+    Note: 'run = the history + 1'
+    Source: 'ProjectPAULA quest.cpp send_quest_add (verified in the client: sub_6F0960 case 132)'
+  - Id: 133
+    Dir: S2C
+    Name: 'QUEST_REMOVED'
+    Fields: ['u32 qid']
+    Source: 'ProjectPAULA quest.cpp send_quest_remove'
+  - Id: 150
+    Dir: S2C
+    Name: 'QUEST_COMPLETED'
+    Fields: ['u16 records', 'rest']
+    Note: 'n bag records, u16 m {u32 item, u16 count}, u32 EXP, u32 TM EXP, u16 qid, u16 run, u32 gelder, u16 skill, u16 skillLv'
+    Source: 'ProjectPAULA quest.cpp quest_complete (verified in the client: case 150)'
+  - Id: 249
+    Dir: S2C
+    Name: 'EXCHANGE_SHOP_OPEN'
+    Fields: ['u8 n', 'rest']
+    Note: 'n x u16 ExchangeID (the NPC ExcShopTable); after S2C 117, the player in state 18 (moves swallowed) until C2S 257'
+    Source: 'ProjectPAULA exchange_shop.cpp npc_exchange_shop_start (verified in the client: case 249)'
+  - Id: 255
+    Dir: S2C
+    Name: 'EXCHANGE_DONE'
+    Fields: ['u8 n', 'rest']
+    Note: 'n bag records (the items given, the ResIDs); refusals: 191 [i32 -1] / 256'
+    Source: 'ProjectPAULA exchange_shop.cpp handle_exchange (verified in the client: case 255)'
+  - Id: 234
+    Dir: S2C
+    Name: 'QUEST_LIST'
+    Fields: ['u16 n', 'N*{u32 qid,u16 run}']
+    Note: 'login: the normal quests on'
+    Source: 'ProjectPAULA quest.cpp send_quest_list (verified in the client: loading dispatcher)'
+
+# ---- Client -> Server (login, from ProjectPAULA auth_session.cpp) ----
+  - Id: 11501
+    Dir: C2S
+    Name: 'LOGIN_REQUEST'
+    Fields: ['str19 account', 'str19 password', 'u32 keyLo', 'u32 keyHi']
+    Note: 'HANDSHAKE_PAULA; the launcher puts the account login in the command line'
+    Source: 'ProjectPAULA auth_session.cpp (46 bytes, matches the live capture)'
+  - Id: 11505
+    Dir: C2S
+    Name: 'RESERVE_WORLD_REQ'
+    Fields: ['u16 world', 'u16 island']
+    Source: 'ProjectPAULA auth_session.cpp / memory kto-server-select'
+
+# ---- Client -> Server (generated from ProjectPAULA handlers) ----
+  - Id: 94
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 97
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 99
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 100
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 101
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 102
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 171
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 172
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 173
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 176
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 177
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 179
+    Dir: C2S
+    Name: 'TRADE'
+    Source: 'ProjectPAULA trade.cpp handle_trade'
+    Note: 'branchy reads: u16 target, u8 , u8 '
+  - Id: 1230
+    Dir: C2S
+    Name: 'POST_LIST'
+    Fields: ['u8 list']
+    Source: 'ProjectPAULA postbox.cpp handle_post_list'
+  - Id: 1233
+    Dir: C2S
+    Name: 'POST_DETAIL'
+    Fields: ['u8', 'u32 uid']
+    Source: 'ProjectPAULA postbox.cpp handle_post_detail'
+  - Id: 1236
+    Dir: C2S
+    Name: 'POST_RECV'
+    Fields: ['u32 uid']
+    Source: 'ProjectPAULA postbox.cpp handle_post_recv'
+  - Id: 1239
+    Dir: C2S
+    Name: 'POST_SEND'
+    Source: 'ProjectPAULA postbox.cpp handle_post_send'
+    Note: 'branchy reads: u8 b, u8 n, u64 uid, u32 count'
+  - Id: 1242
+    Dir: C2S
+    Name: 'POST_DELETE'
+    Fields: ['u32 uid']
+    Source: 'ProjectPAULA postbox.cpp handle_post_delete'
+  - Id: 4
+    Dir: C2S
+    Name: 'AUTH'
+    Fields: ['u32 char_uid_', 'u32 uid_hi', 'u16', 'u32 unk']
+    Source: 'ProjectPAULA game_session.cpp handle_auth'
+  - Id: 5
+    Dir: C2S
+    Name: 'ENTER_CONFIRM'
+    Source: 'ProjectPAULA game_session.cpp handle_enter_confirm'
+  - Id: 24
+    Dir: C2S
+    Name: 'MOVE'
+    Fields: ['u16 srcX', 'u16 srcY', 'u16 dstX', 'u16 dstY', 'u8 mt']
+    Source: 'ProjectPAULA game_session.cpp handle_move'
+  - Id: 468
+    Dir: C2S
+    Name: 'PORTAL_MOVE'
+    Fields: ['u16 dstX', 'u16 dstY', 'u8 mt']
+    Source: 'ProjectPAULA game_session.cpp handle_portal_move'
+  - Id: 5505
+    Dir: C2S
+    Name: 'SESSION_READY'
+    Source: 'ProjectPAULA game_session.cpp handle_session_ready'
+  - Id: 5508
+    Dir: C2S
+    Name: 'SESSION_ACK'
+    Source: 'ProjectPAULA game_session.cpp handle_session_ack'
+  - Id: 1900
+    Dir: C2S
+    Name: 'HEARTBEAT'
+    Source: 'ProjectPAULA game_session.cpp handle_heartbeat'
+  - Id: 1901
+    Dir: C2S
+    Name: 'HEARTBEAT'
+    Source: 'ProjectPAULA game_session.cpp handle_heartbeat'
+  - Id: 156
+    Dir: C2S
+    Name: 'ENTER_ZONE_CMD'
+    Fields: ['u32 char_uid_', 'rest']
+    Source: 'ProjectPAULA game_session.cpp handle_enter_zone_cmd'
+  - Id: 11476
+    Dir: C2S
+    Name: 'ZONE_LOAD'
+    Fields: ['i16 zone_id']
+    Source: 'ProjectPAULA game_session.cpp handle_zone_load'
+  - Id: 11479
+    Dir: C2S
+    Name: 'ZONE_ENTER'
+    Fields: ['i16 zone_id']
+    Source: 'ProjectPAULA game_session.cpp handle_zone_enter'
+  - Id: 11401
+    Dir: C2S
+    Name: 'FIELD_ENTER'
+    Fields: ['i16 zone_id', 'i32 x', 'i32 y']
+    Source: 'ProjectPAULA game_session.cpp handle_field_enter'
+  - Id: 11404
+    Dir: C2S
+    Name: 'FIELD_READY'
+    Source: 'ProjectPAULA game_session.cpp handle_field_ready'
+  - Id: 11413
+    Dir: C2S
+    Name: 'FIELD_LEAVE'
+    Source: 'ProjectPAULA game_session.cpp handle_field_leave'
+  - Id: 11416
+    Dir: C2S
+    Name: 'POSITION_UPDATE'
+    Fields: ['i32 pos_x_', 'i32 pos_y_']
+    Source: 'ProjectPAULA game_session.cpp handle_position_update'
+  - Id: 7001
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7013
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7017
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7020
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7021
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7025
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7010
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7042
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7004
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7007
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7054
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7079
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7047
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7066
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7077
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7080
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7069
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7072
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7075
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7083
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7302
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7305
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7308
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7311
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7314
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7317
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7320
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7321
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7322
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 7325
+    Dir: C2S
+    Name: 'PARTY'
+    Source: 'ProjectPAULA party.cpp handle_party'
+  - Id: 54
+    Dir: C2S
+    Name: 'CHAT'
+    Fields: ['u8', 'rest']
+    Source: 'ProjectPAULA atcommand.cpp handle_chat'
+  - Id: 417
+    Dir: C2S
+    Name: 'CHAT'
+    Fields: ['u8', 'rest']
+    Source: 'ProjectPAULA atcommand.cpp handle_chat'
+  - Id: 713
+    Dir: C2S
+    Name: 'CHAT'
+    Fields: ['u8', 'rest']
+    Source: 'ProjectPAULA atcommand.cpp handle_chat'
+  - Id: 800
+    Dir: C2S
+    Name: 'MEGAPHONE'
+    Fields: ['u64 uid']
+    Source: 'ProjectPAULA megaphone.cpp handle_megaphone'
+  - Id: 817
+    Dir: C2S
+    Name: 'MEMORY_PORT_OPEN'
+    Fields: ['u64 uid']
+    Source: 'ProjectPAULA memory_port.cpp handle_memory_port_open'
+  - Id: 820
+    Dir: C2S
+    Name: 'MEMORY_PORT_ADD'
+    Fields: ['u64 uid', 'u16 slot']
+    Source: 'ProjectPAULA memory_port.cpp handle_memory_port_add'
+  - Id: 823
+    Dir: C2S
+    Name: 'MEMORY_PORT_DELETE'
+    Fields: ['u64 uid', 'u16 slot']
+    Source: 'ProjectPAULA memory_port.cpp handle_memory_port_delete'
+  - Id: 238
+    Dir: C2S
+    Name: 'SKILL_REQUEST'
+    Fields: ['u16 sid', 'u8 lv']
+    Source: 'ProjectPAULA skill.cpp handle_skill_request'
+    Note: 'lv = the learned level; ESAUI skills answer S2C 241 (the client opens its selection), others fire (240) or 239'
+  - Id: 224
+    Dir: C2S
+    Name: 'SKILL_TARGET'
+    Fields: ['u8 mode', 'u16 sid', 'u8 lv', 'u16 kind', 'u16 size', 'rest payload']
+    Source: 'ProjectPAULA skill.cpp handle_skill_target; client sub_C0B180'
+    Note: 'mode 2; kind = the skill ESAUI: 1/7/8 payload [u16 target], 3/6/10 [u16 x][u16 y]; needs no 0xEE first'
+  - Id: 263
+    Dir: C2S
+    Name: 'SKILL_SELECT_CANCEL'
+    Fields: ['u8 mode', 'u16 sid', 'u8 lv']
+    Source: 'ProjectPAULA skill.cpp handle_skill_select_cancel'
+  - Id: 844
+    Dir: C2S
+    Name: 'SKILL_SCROLL'
+    Fields: ['u64 uid', 'u16 sid']
+    Source: 'ProjectPAULA skill.cpp handle_skill_scroll'
+  - Id: 264
+    Dir: C2S
+    Name: 'USE_ITEM_CUSTOM'
+    Fields: ['u64 uid', 'i16 n', 'u8']
+    Source: 'ProjectPAULA item_use.cpp handle_use_item_custom'
+  - Id: 1025
+    Dir: C2S
+    Name: 'DISGUISE_CANCEL'
+    Source: 'ProjectPAULA item_use.cpp handle_disguise_cancel'
+  - Id: 849
+    Dir: C2S
+    Name: 'SKILL_SCROLL_TARGET'
+    Fields: ['u8 mode', 'u16 sid', 'u8 lv', 'u16 kind', 'u16 size', 'u8']
+    Source: 'ProjectPAULA skill.cpp handle_skill_scroll_target'
+  - Id: 481
+    Dir: C2S
+    Name: 'SKILL_LEVEL_UP'
+    Fields: ['u8 b']
+    Source: 'ProjectPAULA skill.cpp handle_skill_level_up'
+  - Id: 111
+    Dir: C2S
+    Name: 'NPC_TALK'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA npc_talk.cpp handle_npc_talk'
+  - Id: 114
+    Dir: C2S
+    Name: 'NPC_NEXT'
+    Fields: ['u16 id', 'u8 index']
+    Source: 'ProjectPAULA npc_talk.cpp handle_npc_next'
+  - Id: 117
+    Dir: C2S
+    Name: 'NPC_END'
+    Source: 'ProjectPAULA npc_talk.cpp handle_npc_end'
+  - Id: 127
+    Dir: C2S
+    Name: 'NPC_SCRIPT'
+    Fields: ['u16 id', 'u8 func', 'rest']
+    Source: 'ProjectPAULA npc_talk.cpp handle_npc_script'
+  - Id: 29
+    Dir: C2S
+    Name: 'ATTACK'
+    Fields: ['u16 target_eid', 'u8 mt']
+    Source: 'ProjectPAULA game_session.cpp handle_attack'
+    Note: 'mt = move type of the chase (1 walk, 2 run, 0 = run); acked by S2C 0x1E'
+  - Id: 288
+    Dir: C2S
+    Name: 'ATTACK'
+    Source: 'ProjectPAULA game_session.cpp handle_attack'
+    Note: 'branchy reads: u16 target_eid, u8 mt'
+  - Id: 33
+    Dir: C2S
+    Name: 'PICKUP'
+    Fields: ['u16 item_oid', 'u8 mt']
+    Source: 'ProjectPAULA inventory.cpp handle_pickup'
+  - Id: 927
+    Dir: C2S
+    Name: 'SECURE_COMMAND'
+    Fields: ['u16 inner', 'u8', 'rest']
+    Source: 'ProjectPAULA inventory.cpp handle_secure_command'
+  - Id: 67
+    Dir: C2S
+    Name: 'DROP_ITEM'
+    Fields: ['u32 id', 'u64 uid', 'u16 count', 'i16 tx', 'i16 ty']
+    Source: 'ProjectPAULA inventory.cpp handle_drop_item'
+  - Id: 87
+    Dir: C2S
+    Name: 'USE_ITEM'
+    Fields: ['u64 uid']
+    Source: 'ProjectPAULA item_use.cpp handle_use_item'
+  - Id: 81
+    Dir: C2S
+    Name: 'EQUIP_ITEM'
+    Fields: ['u64 uid', 'u8 slot']
+    Source: 'ProjectPAULA equip.cpp handle_equip_item'
+  - Id: 84
+    Dir: C2S
+    Name: 'RELEASE_ITEM'
+    Fields: ['u64 uid', 'u8 slot']
+    Source: 'ProjectPAULA equip.cpp handle_release_item'
+  - Id: 517
+    Dir: C2S
+    Name: 'EQUIP_COMMON'
+    Fields: ['u64 uid', 'u8 slot']
+    Source: 'ProjectPAULA equip.cpp handle_equip_common'
+  - Id: 520
+    Dir: C2S
+    Name: 'RELEASE_COMMON'
+    Fields: ['u64 uid', 'u8 slot']
+    Source: 'ProjectPAULA equip.cpp handle_release_common'
+  - Id: 511
+    Dir: C2S
+    Name: 'GUN_SEED'
+    Source: 'ProjectPAULA gun.cpp handle_gun_seed'
+  - Id: 477
+    Dir: C2S
+    Name: 'GUN_ATTACK'
+    Fields: ['u16 target', 'u16 crc', 'u16 per', 'u8 mt']
+    Source: 'ProjectPAULA gun.cpp handle_gun_attack'
+  - Id: 22
+    Dir: C2S
+    Name: 'RESTART'
+    Source: 'ProjectPAULA game_session.cpp handle_restart'
+  - Id: 759
+    Dir: C2S
+    Name: 'RESTART'
+    Source: 'ProjectPAULA game_session.cpp handle_restart'
+  - Id: 108
+    Dir: C2S
+    Name: 'STAT_ALLOC'
+    Fields: ['i16']
+    Source: 'ProjectPAULA game_session.cpp handle_stat_alloc'
+  - Id: 64
+    Dir: C2S
+    Name: 'ACTION'
+    Fields: ['u8 a']
+    Source: 'ProjectPAULA game_session.cpp handle_action'
+  - Id: 70
+    Dir: C2S
+    Name: 'SHOP_OPEN'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA shop.cpp handle_shop_open'
+  - Id: 164
+    Dir: C2S
+    Name: 'SHOP_LIST'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA shop.cpp handle_shop_list'
+  - Id: 166
+    Dir: C2S
+    Name: 'SHOP_LIST'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA shop.cpp handle_shop_list'
+  - Id: 72
+    Dir: C2S
+    Name: 'SHOP_BUY'
+    Source: 'ProjectPAULA shop.cpp handle_shop_buy'
+    Note: 'branchy reads: u16 id, u16 n, u32 item, u16 count'
+  - Id: 76
+    Dir: C2S
+    Name: 'SHOP_SELL'
+    Source: 'ProjectPAULA shop.cpp handle_shop_sell'
+    Note: 'branchy reads: u16 id, u16 n, u64 uid, u32 item, u16 count'
+  - Id: 79
+    Dir: C2S
+    Name: 'SHOP_CLOSE'
+    Source: 'ProjectPAULA shop.cpp handle_shop_close'
+  - Id: 44
+    Dir: C2S
+    Name: 'DRILL_START'
+    Fields: ['u16 tx', 'u16 ty', 'u8 mt']
+    Source: 'ProjectPAULA drill.cpp handle_drill_start'
+  - Id: 48
+    Dir: C2S
+    Name: 'DRILL_CANCEL'
+    Fields: ['u16 cnt', 'u16 ms', 'rest']
+    Note: 'cnt = the gauge starts (the life it costs), ms = the gauge time (client c2s_48)'
+    Source: 'ProjectPAULA drill.cpp handle_drill_cancel'
+  - Id: 49
+    Dir: C2S
+    Name: 'DRILL_END'
+    Fields: ['u16 cnt', 'u16 ms', 'u16 depth', 'u16 crc', 'rest']
+    Note: 'crc = seed ^ BarEffArea ^ BarSpeed<<1 ^ ScoopMass<<5 ^ depth<<8 ^ cnt<<12 (client c2s_49)'
+    Source: 'ProjectPAULA drill.cpp handle_drill_end'
+  - Id: 10012
+    Dir: C2S
+    Name: 'DRILL_DISPATCH'
+    Source: 'ProjectPAULA game_session.cpp handle_drill_dispatch'
+  - Id: 251
+    Dir: C2S
+    Name: 'EXCHANGE_INFO'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA exchange_shop.cpp handle_exchange_info'
+  - Id: 254
+    Dir: C2S
+    Name: 'EXCHANGE'
+    Source: 'ProjectPAULA exchange_shop.cpp handle_exchange'
+    Note: 'branchy reads: u16 id, u8 n, u64 uid, u32 item, u16 cnt, u8 times'
+  - Id: 257
+    Dir: C2S
+    Name: 'EXCHANGE_CLOSE'
+    Source: 'ProjectPAULA exchange_shop.cpp handle_exchange_close'
+  - Id: 1040
+    Dir: C2S
+    Name: 'MONQ_RETURN'
+    Fields: ['u32 type']
+    Source: 'ProjectPAULA monster_quest.cpp handle_monq_return'
+  - Id: 139
+    Dir: C2S
+    Name: 'WH_ADD'
+    Fields: ['u8 tab', 'u64 uid', 'u32 item', 'u16 cnt']
+    Source: 'ProjectPAULA warehouse.cpp handle_wh_add'
+  - Id: 142
+    Dir: C2S
+    Name: 'WH_REMOVE'
+    Fields: ['u8 tab', 'u64 uid', 'u32 item', 'u16 cnt']
+    Source: 'ProjectPAULA warehouse.cpp handle_wh_remove'
+  - Id: 745
+    Dir: C2S
+    Name: 'WH_EXCHANGE'
+    Fields: ['u8 from_id', 'u8 to_id', 'u64 uid', 'u32 item', 'u16 cnt']
+    Source: 'ProjectPAULA warehouse.cpp handle_wh_exchange'
+  - Id: 138
+    Dir: C2S
+    Name: 'WH_CLOSE'
+    Source: 'ProjectPAULA warehouse.cpp handle_wh_close'
+  - Id: 198
+    Dir: C2S
+    Name: 'BANK_ADD'
+    Fields: ['u64 uid', 'u32 item', 'u16 cnt']
+    Source: 'ProjectPAULA bank.cpp handle_bank_add'
+  - Id: 201
+    Dir: C2S
+    Name: 'BANK_REMOVE'
+    Fields: ['u64 uid', 'u32 item', 'u16 cnt']
+    Source: 'ProjectPAULA bank.cpp handle_bank_remove'
+  - Id: 204
+    Dir: C2S
+    Name: 'BANK_MONEY'
+    Fields: ['u32']
+    Source: 'ProjectPAULA bank.cpp handle_bank_money'
+  - Id: 207
+    Dir: C2S
+    Name: 'BANK_MONEY'
+    Fields: ['u32']
+    Source: 'ProjectPAULA bank.cpp handle_bank_money'
+  - Id: 197
+    Dir: C2S
+    Name: 'BANK_CLOSE'
+    Source: 'ProjectPAULA bank.cpp handle_bank_close'
+  - Id: 696
+    Dir: C2S
+    Name: 'REFINE'
+    Fields: ['u64 uid', 'u64 mat_uid', 'u64 sup_uid', 'u32 sup_id']
+    Source: 'ProjectPAULA refine.cpp handle_refine'
+  - Id: 699
+    Dir: C2S
+    Name: 'REPAIR'
+    Fields: ['u64 uid', 'u64 mat_uid']
+    Source: 'ProjectPAULA refine.cpp handle_repair'
+  - Id: 704
+    Dir: C2S
+    Name: 'GROWTH'
+    Fields: ['u64 uid', 'u64 mat_uid', 'u64', 'u64']
+    Source: 'ProjectPAULA refine.cpp handle_growth'
+  - Id: 734
+    Dir: C2S
+    Name: 'RESETMIX'
+    Fields: ['u64 uid', 'u64 mat_uid', 'u32 slot']
+    Source: 'ProjectPAULA refine.cpp handle_resetmix'
+  - Id: 702
+    Dir: C2S
+    Name: 'REFINE_CLOSE'
+    Source: 'ProjectPAULA refine.cpp handle_refine_close'
+  - Id: 707
+    Dir: C2S
+    Name: 'REFINE_CLOSE'
+    Source: 'ProjectPAULA refine.cpp handle_refine_close'
+  - Id: 737
+    Dir: C2S
+    Name: 'REFINE_CLOSE'
+    Source: 'ProjectPAULA refine.cpp handle_refine_close'
+  - Id: 221
+    Dir: C2S
+    Name: 'COMPOUND_INFO'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA compound.cpp handle_compound_info'
+  - Id: 227
+    Dir: C2S
+    Name: 'COMPOUND_PROB'
+    Source: 'ProjectPAULA compound.cpp handle_compound_prob'
+    Note: 'branchy reads: u16 id, u8 type, u8 spin, u8 n, u64 uid, u32 item, u16 cnt'
+  - Id: 186
+    Dir: C2S
+    Name: 'COMPOUND'
+    Source: 'ProjectPAULA compound.cpp handle_compound'
+    Note: 'branchy reads: u8 n, u64 uid, u32 item, u16 cnt'
+  - Id: 187
+    Dir: C2S
+    Name: 'COMPOUND_OPEN'
+    Source: 'ProjectPAULA compound.cpp handle_compound_open'
+  - Id: 192
+    Dir: C2S
+    Name: 'COMPOUND_CLOSE'
+    Source: 'ProjectPAULA compound.cpp handle_compound_close'
+  - Id: 486
+    Dir: C2S
+    Name: 'SKILL_SHOP_OPEN'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_open'
+  - Id: 489
+    Dir: C2S
+    Name: 'SKILL_SHOP_NEXT'
+    Fields: ['u16 id', 'u8 index']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_next'
+  - Id: 496
+    Dir: C2S
+    Name: 'SKILL_SHOP_SCRIPT'
+    Fields: ['u16 id', 'u8 func', 'rest']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_script'
+  - Id: 497
+    Dir: C2S
+    Name: 'SKILL_SHOP_SCRIPT'
+    Fields: ['u16 id', 'u8 func', 'rest']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_script'
+  - Id: 503
+    Dir: C2S
+    Name: 'SKILL_SHOP_LIST'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_list'
+  - Id: 505
+    Dir: C2S
+    Name: 'SKILL_SHOP_LIST'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_list'
+  - Id: 492
+    Dir: C2S
+    Name: 'SKILL_SHOP_CLOSE'
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_close'
+  - Id: 502
+    Dir: C2S
+    Name: 'SKILL_SHOP_CLOSE'
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_shop_close'
+  - Id: 560
+    Dir: C2S
+    Name: 'SKILL_MASTER'
+    Fields: ['u16 id', 'u16 skill']
+    Source: 'ProjectPAULA skill_shop.cpp handle_skill_master'
+  - Id: 569
+    Dir: C2S
+    Name: 'CHANGE_JOB'
+    Fields: ['u16 id']
+    Source: 'ProjectPAULA skill_shop.cpp handle_change_job'
+
+Footer:
+  Imports:

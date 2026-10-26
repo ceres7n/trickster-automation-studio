@@ -1,0 +1,41 @@
+; Trickster Automation Studio - settings.
+; The build copies this file next to the exe as tas.ini.default; the app writes your own
+; settings to tas.ini there (Settings page). Every path may also be set from the app.
+
+[Client]
+; the client to launch (Trickster.bin or Trickster.exe; the other extension is tried too)
+TricksterPath=
+; the server IP baked into your client build: every copy of it in the client's memory is
+; replaced by LoginIP at launch (empty = the client is not patched)
+OriginalIP=
+; also write LoginIP/LoginPort into the older KTO build's login globals (keep 0 for other builds)
+PatchLoginGlobals=0
+; wait after CreateProcess before patching the IP and injecting the hook DLL
+UnpackWaitMs=3000
+; a command run (hidden) before every launch, e.g. clearing your server's login tokens; empty = nothing
+PreLaunch=
+
+[Server]
+; where the client logs in (your AuthServer / LoginServer)
+LoginIP=127.0.0.1
+LoginPort=9980
+GroupID=0
+Token=blank0|0
+
+[Data]
+; YOUR SERVER'S libconfig XML: items, monsters, skills, maps, NPCs, quests, shops, drops ...
+; (empty = the first conf\*.xml next to the exe)
+LibConfig=
+; YOUR SERVER'S (or client's) data folder: map\*.md3 and gulim13.fnt2 (empty = conf\ next to the exe)
+DataDir=
+; only when the .md3 maps are not in <DataDir>\map
+MapDir=
+; (optional) a folder of ProjectPAULA-style db\*.yml files, read only when there is no XML
+GameDbDir=
+
+[Bot]
+; a Windows notification + the taskbar flashing when a bot ends / stops on a problem
+Notify=1
+
+[Accounts]
+; login=label  (the login is what your AuthServer resolves to an account); one "Open" each on the Welcome page

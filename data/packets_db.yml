@@ -1,0 +1,3182 @@
+# =============================================================================
+#   Packets Database  (PACKETS_DB)
+# =============================================================================
+#
+#   Trickster network packets (S2C + C2S) reverse-engineered from Trickster.bin.
+#   S2C field lists come from the named pkt_read_* readers in each handler; C2S
+#   opcodes from decompiled Net_Send_*/c2s_send(OPCODE,..) calls (ground truth),
+#   C2S field lists from builder heap-writes (approximate).
+#
+#   Transport: 11-byte header + payload (+opt pad). Header: u16 Len, u16, u16
+#   (opcode/param), u8 RandByte@6, u8 Flags@7 (1=checksum 4=encrypt 8=pad), u8
+#   Checksum@8. Payload cipher: CryptTable[b + ((RandByte ^ pos) << 8)] over a
+#   65536-byte (256x256) substitution table (dump *g_crypt_table @0x10FA928).
+#
+#   Fields
+#     Id       - opcode (decimal)
+#     Hex      - opcode (hex)
+#     Dir      - S2C | C2S
+#     Name     - known semantic name (kto_opcodes.md; omitted if unknown)
+#     Handler  - client handler (S2C) / sender function (C2S)
+#     Len      - fixed | var
+#     Fields   - ordered field types; 'N*{...}' = loop (N = preceding count field)
+#     Note     - verified field semantics (where known)
+#     InDoc    - (C2S) false = opcode newly discovered, absent from kto_opcodes.md
+#
+#   Field types: u8 u16 u32 str(nul-terminated) blobN(N raw bytes)
+#   equipset234(234B equip/avatar layer) tuple(u32,u16,u8).
+# =============================================================================
+
+Header:
+  Type: PACKETS_DB
+  Version: 1
+
+Body:
+# ---- Server -> Client (129) ----
+  - Id: 7002
+    Hex: '0x1B5A'
+    Dir: S2C
+    Name: 'CHAR_INFO'
+    Handler: 's2c_char_7002_info'
+    Len: var
+    Fields: ['u16', 'str', 'u16']
+    Note: 'CHAR_INFO: u16 charId, str name(36), u16 zone'
+  - Id: 7003
+    Hex: '0x1B5B'
+    Dir: S2C
+    Name: 'PARTY_CREATE_FAIL'
+    Handler: 's2c_party_7003_create_fail'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7006
+    Hex: '0x1B5E'
+    Dir: S2C
+    Name: 'PARTY_DIVIDE_EXP_FAIL'
+    Handler: 's2c_party_7006_divide_exp_fail'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7009
+    Hex: '0x1B61'
+    Dir: S2C
+    Name: 'PARTY_CHANGE_NAME_FAIL'
+    Handler: 's2c_party_7009_change_name_fail'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7014
+    Hex: '0x1B66'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_DETAIL'
+    Handler: 's2c_party_7014_member_detail'
+    Len: var
+    Fields: ['str']
+  - Id: 7015
+    Hex: '0x1B67'
+    Dir: S2C
+    Name: 'CHAR_UPDATE'
+    Handler: 's2c_char_7015_update'
+    Len: var
+    Fields: ['str', 'u8']
+  - Id: 7016
+    Hex: '0x1B68'
+    Dir: S2C
+    Name: 'CHAR_STAT'
+    Handler: 's2c_char_7016'
+    Len: var
+    Fields: ['str', 'str', 'u8', 'u8', 'u8', 'u16']
+  - Id: 7018
+    Hex: '0x1B6A'
+    Dir: S2C
+    Name: 'PARTY_FORCE_UPDATE'
+    Handler: 's2c_party_7018_force_update'
+    Len: var
+    Fields: ['u16', 'str', 'u16', 'u16', 'u8', 'u8', 'u16', 'u8', 'u8', 'u8']
+  - Id: 7019
+    Hex: '0x1B6B'
+    Dir: S2C
+    Name: 'CHAR_FLAG_SET'
+    Handler: 's2c_char_7019_flag'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7027
+    Hex: '0x1B73'
+    Dir: S2C
+    Name: 'CHAR_FLAG_SET_2'
+    Handler: 's2c_char_7027_flag2'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7033
+    Hex: '0x1B79'
+    Dir: S2C
+    Name: 'PARTY_DATA_A'
+    Handler: 's2c_party_7033_data'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 7034
+    Hex: '0x1B7A'
+    Dir: S2C
+    Name: 'PARTY_DATA_B'
+    Handler: 's2c_party_7034'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 7035
+    Hex: '0x1B7B'
+    Dir: S2C
+    Name: 'PARTY_SLOT'
+    Handler: 's2c_party_7035'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 7036
+    Hex: '0x1B7C'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_EXP'
+    Handler: 's2c_party_7036'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 7037
+    Hex: '0x1B7D'
+    Dir: S2C
+    Name: 'PARTY_LOOT_TYPE'
+    Handler: 's2c_party_7037_loot_type'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 7038
+    Hex: '0x1B7E'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_STAT_A'
+    Handler: 's2c_party_7038'
+    Len: var
+    Fields: ['str']
+  - Id: 7039
+    Hex: '0x1B7F'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_DATA'
+    Handler: 's2c_party_7039_member_data'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7040
+    Hex: '0x1B80'
+    Dir: S2C
+    Handler: 's2c_party_7040'
+    Len: fixed
+    Fields: ['u32', 'u32', 'u16', 'u16', 'u16', 'u32', 'u32']
+  - Id: 7043
+    Hex: '0x1B83'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_STAT_B'
+    Handler: 's2c_party_7043'
+    Len: var
+    Fields: ['u16', 'str']
+  - Id: 7044
+    Hex: '0x1B84'
+    Dir: S2C
+    Name: 'PARTY_FORCE_NORMAL_MODE'
+    Handler: 's2c_party_7044'
+    Len: fixed
+    Fields: ['u16', 'u8']
+  - Id: 7046
+    Hex: '0x1B86'
+    Dir: S2C
+    Handler: 's2c_party_7046'
+    Len: fixed
+    Fields: ['u8', 'u16', 'u16']
+  - Id: 7048
+    Hex: '0x1B88'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_UID_B'
+    Handler: 's2c_party_7048_uid_b'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 7051
+    Hex: '0x1B8B'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_EXP_2'
+    Handler: 's2c_party_7051'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 7056
+    Hex: '0x1B90'
+    Dir: S2C
+    Handler: 's2c_party_7056'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 7062
+    Hex: '0x1B96'
+    Dir: S2C
+    Name: 'CHAR_VALUE_64_B'
+    Handler: 's2c_party_7062_7063'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 7064
+    Hex: '0x1B98'
+    Dir: S2C
+    Name: 'CHAR_POSITION'
+    Handler: 's2c_party_7064_7065_memberflag'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 7066
+    Hex: '0x1B9A'
+    Dir: S2C
+    Name: 'PARTY_REQUEST'
+    Handler: 's2c_party_7066_confirm_accept'
+    Len: var
+    Fields: ['str', 'u16', 'u32']
+  - Id: 7076
+    Hex: '0x1BA4'
+    Dir: S2C
+    Handler: 's2c_party_7076_confirm_rejoin'
+    Len: var
+    Fields: ['u16', 'str', 'str', 'u16', 'u8', 'u8', 'u8', 'u8']
+  - Id: 7081
+    Hex: '0x1BA9'
+    Dir: S2C
+    Name: 'PARTY_SETUP_MEMBER'
+    Handler: 's2c_party_7081_confirm_join'
+    Len: var
+    Fields: ['u8', 'u16', 'str', 'u16', 'u8', 'u8', 'u8', 'u8']
+  - Id: 7323
+    Hex: '0x1C9B'
+    Dir: S2C
+    Name: 'PARTY_DETAILED_INFO'
+    Handler: 's2c_party_7323_detailed_info'
+    Len: var
+    Fields: ['u16', 'u32', 'u16', 'u8', 'u8', 'u8', 'u16', 'str', 'u8', 'u8', 'str', 'u16', 'u8', 'u8', 'u8', 'str']
+  - Id: 7326
+    Hex: '0x1C9E'
+    Dir: S2C
+    Name: 'PARTY_MEMBER_INFO'
+    Handler: 's2c_party_7326_member_info'
+    Len: var
+    Fields: ['str', 'str']
+  - Id: 7505
+    Hex: '0x1D51'
+    Dir: S2C
+    Handler: 's2c_entity_7505_sub1'
+    Len: var
+    Fields: ['u16', 'u8', 'u8', 'N*{u16,str}']
+  - Id: 7505
+    Hex: '0x1D51'
+    Dir: S2C
+    Handler: 's2c_entity_7505_sub2'
+    Len: var
+    Fields: ['u8', 'u8', 'N*{u16,str,u8,u16}']
+  - Id: 7505
+    Hex: '0x1D51'
+    Dir: S2C
+    Handler: 's2c_entity_7505_sub0'
+    Len: var
+    Fields: ['u8', 'str', 'u16']
+  - Id: 7515
+    Hex: '0x1D5B'
+    Dir: S2C
+    Handler: 's2c_entity_7515_trigger'
+    Len: var
+    Fields: ['u8', 'u8', 'u8', 'N*{str,u16,u32,u32}']
+    Note: 'ENTITY_TRIGGER: u8,u8 count,u8 param, N*{str name,u16,u32,u32} entity status entries'
+  - Id: 7518
+    Hex: '0x1D5E'
+    Dir: S2C
+    Handler: 's2c_entity_7518_complex_list'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 7519
+    Hex: '0x1D5F'
+    Dir: S2C
+    Handler: 's2c_entity_7519_computed_reply'
+    Len: var
+    Fields: ['u8', 'u8', 'u32', 'str', 'u16', 'u32']
+    Note: 'ENTITY_ATTR: u8,u8 count,u32 entityId, N*{str attrName,u16 slot(1..27),u32 value} = combat stats'
+  - Id: 7522
+    Hex: '0x1D62'
+    Dir: S2C
+    Handler: 's2c_entity_7522_slot_list'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 8002
+    Hex: '0x1F42'
+    Dir: S2C
+    Handler: 's2c_item_8002'
+    Len: var
+    Fields: ['u16', 'blob72']
+  - Id: 8003
+    Hex: '0x1F43'
+    Dir: S2C
+    Name: 'ITEM_STATUS_CHANGE'
+    Handler: 's2c_item_8003'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8005
+    Hex: '0x1F45'
+    Dir: S2C
+    Name: 'ITEM_DWORD_PARAM'
+    Handler: 's2c_item_8005'
+    Len: var
+    Fields: ['str']
+  - Id: 8006
+    Hex: '0x1F46'
+    Dir: S2C
+    Name: 'ITEM_BYTE_PARAM'
+    Handler: 's2c_item_8006'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8007
+    Hex: '0x1F47'
+    Dir: S2C
+    Name: 'ITEM_CONDITIONAL_CHECK'
+    Handler: 's2c_item_8007'
+    Len: var
+    Fields: ['str']
+  - Id: 8010
+    Hex: '0x1F4A'
+    Dir: S2C
+    Name: 'ITEM_MULTI_WORD_READ'
+    Handler: 's2c_item_8010'
+    Len: var
+    Fields: ['u16', 'u16', 'u16', 'u8', 'N*{blob72}']
+  - Id: 8011
+    Hex: '0x1F4B'
+    Dir: S2C
+    Name: 'ITEM_BYTE_LOGIC'
+    Handler: 's2c_item_8011'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8014
+    Hex: '0x1F4E'
+    Dir: S2C
+    Name: 'ITEM_COMPLEX_STRUCT'
+    Handler: 's2c_item_8014'
+    Len: var
+    Fields: ['blob36', 'blob72']
+  - Id: 8015
+    Hex: '0x1F4F'
+    Dir: S2C
+    Name: 'ITEM_WORD_SELECT'
+    Handler: 's2c_item_8015'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 8016
+    Hex: '0x1F50'
+    Dir: S2C
+    Name: 'ITEM_BYTE_DWORD_PAIR'
+    Handler: 's2c_item_8016'
+    Len: var
+    Fields: ['u8', 'str']
+  - Id: 8019
+    Hex: '0x1F53'
+    Dir: S2C
+    Name: 'ITEM_BYTE_FLAG'
+    Handler: 's2c_item_8019'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8020
+    Hex: '0x1F54'
+    Dir: S2C
+    Name: 'ITEM_LARGE_STRUCT_A'
+    Handler: 's2c_item_8020'
+    Len: var
+    Fields: ['u8', 'equipset234', 'equipset234']
+    Note: 'AVATAR_SET: u8 flag, equipset234 EQUIP(char+64), equipset234 AVATAR(char+298)'
+  - Id: 8022
+    Hex: '0x1F56'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_A'
+    Handler: 's2c_item_8022'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8023
+    Hex: '0x1F57'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_B'
+    Handler: 's2c_item_8023'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8024
+    Hex: '0x1F58'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_C'
+    Handler: 's2c_item_8024'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8026
+    Hex: '0x1F5A'
+    Dir: S2C
+    Name: 'ITEM_ENTITY_STRUCT_A'
+    Handler: 's2c_item_8026'
+    Len: var
+    Fields: ['blob26']
+  - Id: 8027
+    Hex: '0x1F5B'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_D'
+    Handler: 's2c_item_8027'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8028
+    Hex: '0x1F5C'
+    Dir: S2C
+    Name: 'ITEM_ENTITY_STRUCT_B'
+    Handler: 's2c_item_8028'
+    Len: var
+    Fields: ['blob26']
+  - Id: 8029
+    Hex: '0x1F5D'
+    Dir: S2C
+    Name: 'ITEM_DUAL_STRUCT'
+    Handler: 's2c_item_8029'
+    Len: var
+    Fields: ['u16', 'u8', 'equipset234', 'equipset234', 'tuple(u32,u16,u8)', 'tuple(u32,u16,u8)']
+  - Id: 8030
+    Hex: '0x1F5E'
+    Dir: S2C
+    Name: 'ITEM_LARGE_DATA_PARSE'
+    Handler: 's2c_item_8030'
+    Len: var
+    Fields: ['u16', 'u8', 'equipset234', 'equipset234', 'tuple(u32,u16,u8)', 'tuple(u32,u16,u8)']
+  - Id: 8031
+    Hex: '0x1F5F'
+    Dir: S2C
+    Name: 'ITEM_STATE_SET'
+    Handler: 's2c_item_8031'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8032
+    Hex: '0x1F60'
+    Dir: S2C
+    Name: 'ITEM_POSITION_UPDATE'
+    Handler: 's2c_item_8032'
+    Len: var
+    Fields: ['u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'equipset234', 'equipset234', 'tuple(u32,u16,u8)', 'tuple(u32,u16,u8)', 'blob37', 'blob37', 'blob36', 'blob36']
+    Note: 'AVATAR_FULL_REFRESH. Header = 6 u16 (appearance), stored to char WORDs [312..317]. WIRE ORDER maps to char offsets: #1->+624, #2->+626, #3->+628, #4->+630, #5->+634, #6->+632 (client swaps the last two in memory!). Then equip234(char+64), avatar234(char+298), 2*{u32,u16,u8}(+532/+539), 2*blob37(+546/+583), 2*blob36(weapon slots A/B). GOTCHA: do not assume wire order == memory order for the last 2 appearance fields. Appearance fields are the virtual getters this->w313..w317 (class/hair/haircolor/face among them); hair color is a 0..20 index into a per-ChrType palette (HairColorInfoChrType).'
+  - Id: 8035
+    Hex: '0x1F63'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_E'
+    Handler: 's2c_item_8035'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8038
+    Hex: '0x1F66'
+    Dir: S2C
+    Name: 'ITEM_MESSAGE_BROADCAST'
+    Handler: 's2c_item_8038'
+    Len: var
+    Fields: ['str']
+  - Id: 8039
+    Hex: '0x1F67'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_F'
+    Handler: 's2c_item_8039'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8040
+    Hex: '0x1F68'
+    Dir: S2C
+    Name: 'ITEM_COMPLEX_CONDITIONAL'
+    Handler: 's2c_item_8040'
+    Len: var
+    Fields: ['str']
+  - Id: 8043
+    Hex: '0x1F6B'
+    Dir: S2C
+    Name: 'ITEM_WORD_ACTION'
+    Handler: 's2c_item_8043'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 8045
+    Hex: '0x1F6D'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_G'
+    Handler: 's2c_item_8045'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8047
+    Hex: '0x1F6F'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_H'
+    Handler: 's2c_item_8047'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8049
+    Hex: '0x1F71'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_I'
+    Handler: 's2c_item_8049'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8050
+    Hex: '0x1F72'
+    Dir: S2C
+    Name: 'ITEM_BYTE_ACTION_J'
+    Handler: 's2c_item_8050'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8051
+    Hex: '0x1F73'
+    Dir: S2C
+    Name: 'ITEM_CONDITIONAL_BYTE'
+    Handler: 's2c_item_8051'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8059
+    Hex: '0x1F7B'
+    Dir: S2C
+    Handler: 's2c_item_8059'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8510
+    Hex: '0x213E'
+    Dir: S2C
+    Name: 'SKILL_RESULT'
+    Handler: 's2c_friend_8510'
+    Len: var
+    Fields: ['u32', 'str', 'u32', 'u32', 'str', 'u32', 'u8', 'str', 'N*{u8,u16}', 'u32', 'str', 'str', 'str', 'u32']
+  - Id: 8514
+    Hex: '0x2142'
+    Dir: S2C
+    Name: 'DEBUFF_APPLY'
+    Handler: 's2c_friend_8514'
+    Len: var
+    Fields: ['u8', 'str', 'u8', 'u16']
+  - Id: 8515
+    Hex: '0x2143'
+    Dir: S2C
+    Name: 'DEBUFF_REMOVE'
+    Handler: 's2c_friend_8515'
+    Len: var
+    Fields: ['str']
+  - Id: 8516
+    Hex: '0x2144'
+    Dir: S2C
+    Name: 'STATUS_UPDATE'
+    Handler: 's2c_friend_8516'
+    Len: var
+    Fields: ['str']
+  - Id: 8518
+    Hex: '0x2146'
+    Dir: S2C
+    Name: 'SKILL_COOLDOWN'
+    Handler: 's2c_friend_8518'
+    Len: var
+    Fields: ['u8', 'str', 'u16']
+  - Id: 8520
+    Hex: '0x2148'
+    Dir: S2C
+    Name: 'BUFF_LIST_UPDATE'
+    Handler: 's2c_friend_8520'
+    Len: var
+    Fields: ['str']
+  - Id: 8531
+    Hex: '0x2153'
+    Dir: S2C
+    Name: 'SLOW_APPLY'
+    Handler: 's2c_friend_8531'
+    Len: var
+    Fields: ['str']
+  - Id: 8532
+    Hex: '0x2154'
+    Dir: S2C
+    Name: 'INCAPACITATE_APPLY'
+    Handler: 's2c_friend_8532'
+    Len: var
+    Fields: ['str']
+  - Id: 8533
+    Hex: '0x2155'
+    Dir: S2C
+    Name: 'BUFF_REFRESH'
+    Handler: 's2c_friend_8533'
+    Len: var
+    Fields: ['str']
+  - Id: 8537
+    Hex: '0x2159'
+    Dir: S2C
+    Name: 'PASSIVE_SKILL_GAIN'
+    Handler: 's2c_friend_8537'
+    Len: var
+    Fields: ['u32', 'str', 'u32', 'u32', 'str', 'u32', 'str', 'str', 'str', 'u32']
+  - Id: 8539
+    Hex: '0x215B'
+    Dir: S2C
+    Name: 'SKILL_LEVEL_UP'
+    Handler: 's2c_friend_8539'
+    Len: fixed
+    Fields: ['u8', 'u32']
+  - Id: 8540
+    Hex: '0x215C'
+    Dir: S2C
+    Name: 'DEBUFF_IMMUNITY'
+    Handler: 's2c_friend_8540'
+    Len: fixed
+    Fields: ['u8', 'u32']
+  - Id: 8544
+    Hex: '0x2160'
+    Dir: S2C
+    Name: 'SKILL_RESULT_2'
+    Handler: 's2c_friend_8544'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 8552
+    Hex: '0x2168'
+    Dir: S2C
+    Name: 'PROVOKE_EFFECT'
+    Handler: 's2c_friend_8552'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 8553
+    Hex: '0x2169'
+    Dir: S2C
+    Name: 'BLIND_EFFECT'
+    Handler: 's2c_friend_8553'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 8554
+    Hex: '0x216A'
+    Dir: S2C
+    Name: 'SILENCE_EFFECT'
+    Handler: 's2c_friend_8554'
+    Len: fixed
+    Fields: ['u16', 'u16', 'u16']
+  - Id: 8559
+    Hex: '0x216F'
+    Dir: S2C
+    Name: 'BLEAK_EFFECT'
+    Handler: 's2c_friend_8559'
+    Len: var
+    Fields: ['str']
+  - Id: 8568
+    Hex: '0x2178'
+    Dir: S2C
+    Name: 'SUMMON_DESPAWN'
+    Handler: 's2c_friend_8568_gm_msg'
+    Len: var
+    Fields: ['str', 'u16']
+  - Id: 8572
+    Hex: '0x217C'
+    Dir: S2C
+    Name: 'CRITICAL_HIT'
+    Handler: 's2c_friend_8572_gm_msg2'
+    Len: var
+    Fields: ['str', 'u16']
+  - Id: 8576
+    Hex: '0x2180'
+    Dir: S2C
+    Name: 'DODGE_AVOID'
+    Handler: 's2c_friend_8576'
+    Len: var
+    Fields: ['str']
+  - Id: 8577
+    Hex: '0x2181'
+    Dir: S2C
+    Name: 'BLOCK_ABSORB'
+    Handler: 's2c_friend_8577'
+    Len: var
+    Fields: ['str', 'str']
+  - Id: 8579
+    Hex: '0x2183'
+    Dir: S2C
+    Name: 'COUNTER_ATTACK'
+    Handler: 's2c_friend_8579'
+    Len: var
+    Fields: ['str', 'str']
+  - Id: 8581
+    Hex: '0x2185'
+    Dir: S2C
+    Name: 'DEBUFF_STACK_ADD'
+    Handler: 's2c_friend_8581'
+    Len: var
+    Fields: ['str', 'str']
+  - Id: 8582
+    Hex: '0x2186'
+    Dir: S2C
+    Name: 'ATTRIBUTE_MODIFIER'
+    Handler: 's2c_friend_8582'
+    Len: fixed
+    Fields: ['u8', 'u8']
+  - Id: 8585
+    Hex: '0x2189'
+    Dir: S2C
+    Name: 'SKILL_FAILURE'
+    Handler: 's2c_friend_8585'
+    Len: var
+    Fields: ['str']
+  - Id: 8588
+    Hex: '0x218C'
+    Dir: S2C
+    Handler: 's2c_friend_8588_zone_change'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 10014
+    Hex: '0x271E'
+    Dir: S2C
+    Handler: 's2c_drill_10014'
+    Len: var
+    Fields: ['u32', 'str']
+  - Id: 10016
+    Hex: '0x2720'
+    Dir: S2C
+    Handler: 's2c_drill_10016'
+    Len: var
+    Fields: ['u32', 'str']
+  - Id: 10017
+    Hex: '0x2721'
+    Dir: S2C
+    Handler: 's2c_drill_10017'
+    Len: var
+    Fields: ['u16', 'str']
+  - Id: 10019
+    Hex: '0x2723'
+    Dir: S2C
+    Handler: 's2c_drill_10019'
+    Len: var
+    Fields: ['u16', 'str']
+  - Id: 10020
+    Hex: '0x2724'
+    Dir: S2C
+    Handler: 's2c_drill_10020'
+    Len: var
+    Fields: ['u16', 'str']
+  - Id: 10021
+    Hex: '0x2725'
+    Dir: S2C
+    Handler: 's2c_drill_10021'
+    Len: var
+    Fields: ['u16', 'str']
+  - Id: 10022
+    Hex: '0x2726'
+    Dir: S2C
+    Handler: 's2c_drill_10022'
+    Len: var
+    Fields: ['str', 'u16']
+  - Id: 10025
+    Hex: '0x2729'
+    Dir: S2C
+    Handler: 's2c_drill_10025'
+    Len: var
+    Fields: ['u32', 'str']
+  - Id: 10501
+    Hex: '0x2905'
+    Dir: S2C
+    Handler: 's2c_notify_10501'
+    Len: fixed
+    Fields: ['u16']
+  - Id: 10502
+    Hex: '0x2906'
+    Dir: S2C
+    Handler: 's2c_notify_10502'
+    Len: fixed
+    Fields: ['u16', 'u32']
+  - Id: 11004
+    Hex: '0x2AFC'
+    Dir: S2C
+    Handler: 's2c_social_11004_update_entity'
+    Len: fixed
+    Fields: ['u32']
+  - Id: 11006
+    Hex: '0x2AFE'
+    Dir: S2C
+    Handler: 's2c_social_11006_pair_list'
+    Len: var
+    Fields: ['u32', 'u32', 'u32', 'str', 'str', 'str', 'N*{u32,u32}']
+  - Id: 11007
+    Hex: '0x2AFF'
+    Dir: S2C
+    Handler: 's2c_social_11007_set_status'
+    Len: fixed
+    Fields: ['u32']
+  - Id: 11008
+    Hex: '0x2B00'
+    Dir: S2C
+    Handler: 's2c_social_11008_pair_date'
+    Len: var
+    Fields: ['u32', 'u32', 'u32', 'u32', 'str', 'str', 'str', 'N*{u32,u32}']
+  - Id: 11009
+    Hex: '0x2B01'
+    Dir: S2C
+    Handler: 's2c_social_11009_pair_date_alt'
+    Len: var
+    Fields: ['u32', 'u32', 'u32', 'str', 'str', 'str', 'N*{u32,u32,u32}']
+  - Id: 11804
+    Hex: '0x2E1C'
+    Dir: S2C
+    Handler: 's2c_angel_11804_update_vitals'
+    Len: fixed
+    Fields: ['u32']
+  - Id: 11806
+    Hex: '0x2E1E'
+    Dir: S2C
+    Handler: 's2c_angel_11806_help_success'
+    Len: var
+    Fields: ['str']
+  - Id: 11807
+    Hex: '0x2E1F'
+    Dir: S2C
+    Handler: 's2c_angel_11807_help_fail'
+    Len: fixed
+    Fields: ['u8', 'u16']
+  - Id: 11808
+    Hex: '0x2E20'
+    Dir: S2C
+    Handler: 's2c_angel_11808_set_online'
+    Len: var
+    Fields: ['str']
+  - Id: 11812
+    Hex: '0x2E24'
+    Dir: S2C
+    Handler: 's2c_angel_11812_pos_update'
+    Len: var
+    Fields: ['str', 'u16', 'u16', 'u8', 'str']
+  - Id: 11816
+    Hex: '0x2E28'
+    Dir: S2C
+    Handler: 's2c_angel_11816_accept_fail'
+    Len: fixed
+    Fields: ['u8']
+  - Id: 11817
+    Hex: '0x2E29'
+    Dir: S2C
+    Handler: 's2c_angel_11817_pairing_status'
+    Len: var
+    Fields: ['N*{u8,u16}']
+  - Id: 11818
+    Hex: '0x2E2A'
+    Dir: S2C
+    Handler: 's2c_angel_11818_pairing_by_id'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 11927
+    Hex: '0x2E97'
+    Dir: S2C
+    Handler: 's2c_couple_11927_invite_list'
+    Len: var
+    Fields: ['u16', 'str', 'str', 'str', 'N*{u8}']
+  - Id: 11932
+    Hex: '0x2E9C'
+    Dir: S2C
+    Handler: 's2c_couple_11932_confirm_pair'
+    Len: var
+    Fields: ['str']
+  - Id: 11937
+    Hex: '0x2EA1'
+    Dir: S2C
+    Handler: 's2c_couple_11937'
+    Len: var
+    Fields: ['u16', 'u8', 'u16', 'u8', 'u8', 'u8', 'u8', 'str', 'str', 'str', 'str']
+  - Id: 11939
+    Hex: '0x2EA3'
+    Dir: S2C
+    Handler: 's2c_couple_11939'
+    Len: var
+    Fields: ['u8', 'u16', 'u8', 'u8', 'u8', 'u8', 'str', 'str', 'str', 'str']
+  - Id: 11941
+    Hex: '0x2EA5'
+    Dir: S2C
+    Handler: 's2c_couple_11941'
+    Len: var
+    Fields: ['u8', 'u16', 'u8', 'u8', 'u8', 'u8', 'str', 'str', 'str', 'str']
+  - Id: 11945
+    Hex: '0x2EA9'
+    Dir: S2C
+    Handler: 's2c_couple_11945'
+    Len: fixed
+    Fields: ['u16', 'u16']
+  - Id: 11951
+    Hex: '0x2EAF'
+    Dir: S2C
+    Handler: 's2c_couple_11951_propose'
+    Len: var
+    Fields: ['str']
+  - Id: 11955
+    Hex: '0x2EB3'
+    Dir: S2C
+    Handler: 's2c_couple_11955'
+    Len: var
+    Fields: ['str', 'str']
+  - Id: 11956
+    Hex: '0x2EB4'
+    Dir: S2C
+    Handler: 's2c_couple_11956'
+    Len: var
+    Fields: ['str', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u8', 'u8']
+# ---- Client -> Server (382) ----
+  - Id: 4
+    Hex: '0x4'
+    Dir: C2S
+    Handler: 'sub_82B660'
+    Fields: []
+    InDoc: false
+  - Id: 5
+    Hex: '0x5'
+    Dir: C2S
+    Handler: 'sub_5A1CA0'
+    Fields: []
+    InDoc: false
+  - Id: 18
+    Hex: '0x12'
+    Dir: C2S
+    Handler: 'sub_5A2B70'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 22
+    Hex: '0x16'
+    Dir: C2S
+    Handler: 'sub_5A1C30'
+    Fields: []
+    InDoc: false
+  - Id: 24
+    Hex: '0x18'
+    Dir: C2S
+    Name: 'MOVE'
+    Handler: 'SendMovePacket_0x18'
+    Fields: ['u16', 'u16', 'u16', 'u16', 'u8']
+    InDoc: false
+    Note: 'MOVE: u16 fromX, u16 fromY, u16 toX, u16 toY, u8 flag. The real walk packet (coords); 11416 is only the move toggle.'
+  - Id: 29
+    Hex: '0x1D'
+    Dir: C2S
+    Handler: 'sub_5AB080'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 31
+    Hex: '0x1F'
+    Dir: C2S
+    Handler: 'sub_5AB420'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 33
+    Hex: '0x21'
+    Dir: C2S
+    Handler: 'sub_5AB230'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 44
+    Hex: '0x2C'
+    Dir: C2S
+    Handler: 'sub_5AB4E0'
+    Fields: ['u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 48
+    Hex: '0x30'
+    Dir: C2S
+    Handler: 'sub_5AB790'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 49
+    Hex: '0x31'
+    Dir: C2S
+    Handler: 'sub_5AB680'
+    Fields: ['u16', 'u16', 'u16', 'u16']
+    InDoc: false
+  - Id: 52
+    Hex: '0x34'
+    Dir: C2S
+    Handler: 'sub_5AAF00'
+    Fields: ['str', 'str']
+    InDoc: false
+  - Id: 54
+    Hex: '0x36'
+    Dir: C2S
+    Handler: 'sub_5A1A20'
+    Fields: []
+    InDoc: false
+  - Id: 59
+    Hex: '0x3B'
+    Dir: C2S
+    Handler: 'sub_5A1AE0'
+    Fields: []
+    InDoc: false
+  - Id: 62
+    Hex: '0x3E'
+    Dir: C2S
+    Handler: 'sub_5AB850'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 63
+    Hex: '0x3F'
+    Dir: C2S
+    Handler: 'sub_5AB8F0'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 64
+    Hex: '0x40'
+    Dir: C2S
+    Handler: 'sub_5AB990'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 65
+    Hex: '0x41'
+    Dir: C2S
+    Handler: 'sub_5ABA30'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 70
+    Hex: '0x46'
+    Dir: C2S
+    Handler: 'sub_5ABAE0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 72
+    Hex: '0x48'
+    Dir: C2S
+    Handler: 'sub_5AC290'
+    Fields: ['u16', 'u16', 'u32', 'u16']
+    InDoc: false
+  - Id: 79
+    Hex: '0x4F'
+    Dir: C2S
+    Handler: 'sub_6DDB40'
+    Fields: []
+    InDoc: false
+  - Id: 81
+    Hex: '0x51'
+    Dir: C2S
+    Handler: 'sub_5ABCF0'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 84
+    Hex: '0x54'
+    Dir: C2S
+    Handler: 'sub_5ABDC0'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 87
+    Hex: '0x57'
+    Dir: C2S
+    Handler: 'sub_5AC030'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 88
+    Hex: '0x58'
+    Dir: C2S
+    Handler: 'sub_5AC0E0'
+    Fields: ['u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 93
+    Hex: '0x5D'
+    Dir: C2S
+    Handler: 'sub_5A1B40'
+    Fields: []
+    InDoc: false
+  - Id: 94
+    Hex: '0x5E'
+    Dir: C2S
+    Handler: 'sub_5AC4E0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 97
+    Hex: '0x61'
+    Dir: C2S
+    Handler: 'sub_5A1B90'
+    Fields: []
+    InDoc: false
+  - Id: 99
+    Hex: '0x63'
+    Dir: C2S
+    Handler: 'sub_5A1BA0'
+    Fields: []
+    InDoc: false
+  - Id: 100
+    Hex: '0x64'
+    Dir: C2S
+    Handler: 'sub_5A1BB0'
+    Fields: []
+    InDoc: false
+  - Id: 101
+    Hex: '0x65'
+    Dir: C2S
+    Handler: 'sub_5AC630'
+    Fields: ['u8', 'u32', 'u16']
+    InDoc: false
+  - Id: 102
+    Hex: '0x66'
+    Dir: C2S
+    Handler: 'sub_5AC590'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 108
+    Hex: '0x6C'
+    Dir: C2S
+    Handler: 'sub_5A1B70'
+    Fields: []
+    InDoc: false
+  - Id: 111
+    Hex: '0x6F'
+    Dir: C2S
+    Handler: 'sub_5AC940'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 114
+    Hex: '0x72'
+    Dir: C2S
+    Handler: 'sub_5AC9F0'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 117
+    Hex: '0x75'
+    Dir: C2S
+    Handler: 'sub_5A1C50'
+    Fields: []
+    InDoc: false
+  - Id: 118
+    Hex: '0x76'
+    Dir: C2S
+    Handler: 'sub_5A2C30'
+    Fields: ['str']
+    InDoc: false
+  - Id: 138
+    Hex: '0x8A'
+    Dir: C2S
+    Handler: 'sub_5A1C60'
+    Fields: []
+    InDoc: false
+  - Id: 139
+    Hex: '0x8B'
+    Dir: C2S
+    Handler: 'sub_5AD010'
+    Fields: ['u8', 'u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 142
+    Hex: '0x8E'
+    Dir: C2S
+    Handler: 'sub_5AD110'
+    Fields: ['u8', 'u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 146
+    Hex: '0x92'
+    Dir: C2S
+    Handler: 'sub_5ACD30'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 147
+    Hex: '0x93'
+    Dir: C2S
+    Handler: 'sub_5A2CE0'
+    Fields: ['str']
+    InDoc: false
+  - Id: 156
+    Hex: '0x9C'
+    Dir: C2S
+    Handler: 'sub_5AC7D0'
+    Fields: ['u32', 'u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 164
+    Hex: '0xA4'
+    Dir: C2S
+    Handler: 'sub_5ABB90'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 166
+    Hex: '0xA6'
+    Dir: C2S
+    Handler: 'sub_5ABC40'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 171
+    Hex: '0xAB'
+    Dir: C2S
+    Handler: 'sub_5A1BD0'
+    Fields: []
+    InDoc: false
+  - Id: 173
+    Hex: '0xAD'
+    Dir: C2S
+    Handler: 'sub_5A1BF0'
+    Fields: []
+    InDoc: false
+  - Id: 177
+    Hex: '0xB1'
+    Dir: C2S
+    Handler: 'sub_5A1C10'
+    Fields: []
+    InDoc: false
+  - Id: 179
+    Hex: '0xB3'
+    Dir: C2S
+    Handler: 'sub_5AC720'
+    Fields: ['str']
+    InDoc: false
+  - Id: 182
+    Hex: '0xB6'
+    Dir: C2S
+    Handler: 'sub_5A2D90'
+    Fields: ['str']
+    InDoc: false
+  - Id: 185
+    Hex: '0xB9'
+    Dir: C2S
+    Handler: 'sub_5A2FA0'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 186
+    Hex: '0xBA'
+    Dir: C2S
+    Handler: 'sub_5A3050'
+    Fields: ['u8', 'u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 192
+    Hex: '0xC0'
+    Dir: C2S
+    Handler: 'sub_8C3260'
+    Fields: []
+    InDoc: false
+  - Id: 197
+    Hex: '0xC5'
+    Dir: C2S
+    Handler: 'sub_5A1C70'
+    Fields: []
+    InDoc: false
+  - Id: 198
+    Hex: '0xC6'
+    Dir: C2S
+    Handler: 'sub_5A2770'
+    Fields: ['u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 201
+    Hex: '0xC9'
+    Dir: C2S
+    Handler: 'sub_5A2850'
+    Fields: ['u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 204
+    Hex: '0xCC'
+    Dir: C2S
+    Handler: 'sub_5A2930'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 207
+    Hex: '0xCF'
+    Dir: C2S
+    Handler: 'sub_5A29E0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 220
+    Hex: '0xDC'
+    Dir: C2S
+    Handler: 'sub_5ACDE0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 221
+    Hex: '0xDD'
+    Dir: C2S
+    Handler: 'sub_5A32B0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 224
+    Hex: '0xE0'
+    Dir: C2S
+    Handler: 'sub_5A3430'
+    Fields: ['u8', 'u16', 'u8', 'u16', 'u16']
+    InDoc: false
+  - Id: 226
+    Hex: '0xE2'
+    Dir: C2S
+    Handler: 'sub_5A3550'
+    Fields: ['u16', 'u8', 'u16', 'u8', 'u32', 'u8', 'u16', 'u16']
+    InDoc: false
+  - Id: 227
+    Hex: '0xE3'
+    Dir: C2S
+    Handler: 'sub_5A3160'
+    Fields: ['u16', 'u8', 'u8', 'u8', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 243
+    Hex: '0xF3'
+    Dir: C2S
+    Handler: 'sub_5A3AB0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 248
+    Hex: '0xF8'
+    Dir: C2S
+    Handler: 'sub_5A36B0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 251
+    Hex: '0xFB'
+    Dir: C2S
+    Handler: 'sub_5A38A0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 254
+    Hex: '0xFE'
+    Dir: C2S
+    Handler: 'sub_5A3760'
+    Fields: ['u16', 'u8', 'u32', 'u32', 'u16', 'u8']
+    InDoc: false
+  - Id: 257
+    Hex: '0x101'
+    Dir: C2S
+    Handler: 'sub_8D9AD0'
+    Fields: []
+    InDoc: false
+  - Id: 263
+    Hex: '0x107'
+    Dir: C2S
+    Handler: 'sub_5A3360'
+    Fields: ['u8', 'u16', 'u8']
+    InDoc: false
+  - Id: 264
+    Hex: '0x108'
+    Dir: C2S
+    Handler: 'sub_5AC1B0'
+    Fields: ['u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 267
+    Hex: '0x10B'
+    Dir: C2S
+    Handler: 'sub_5AB140'
+    Fields: ['u16', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 288
+    Hex: '0x120'
+    Dir: C2S
+    Handler: 'sub_5A3950'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 291
+    Hex: '0x123'
+    Dir: C2S
+    Handler: 'sub_5ACBC0'
+    Fields: ['u16', 'u8', 'u8', 'u8', 'str', 'u32', 'u8', 'u16']
+    InDoc: false
+  - Id: 298
+    Hex: '0x12A'
+    Dir: C2S
+    Handler: 'sub_5ACEA0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 306
+    Hex: '0x132'
+    Dir: C2S
+    Handler: 'sub_5ACF50'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 317
+    Hex: '0x13D'
+    Dir: C2S
+    Handler: 'sub_5A2E40'
+    Fields: ['str']
+    InDoc: false
+  - Id: 318
+    Hex: '0x13E'
+    Dir: C2S
+    Handler: 'sub_5A1CD0'
+    Fields: []
+    InDoc: false
+  - Id: 319
+    Hex: '0x13F'
+    Dir: C2S
+    Handler: 'sub_5A3D80'
+    Fields: ['u8', 'str', 'u8', 'u8', 'str']
+    InDoc: false
+  - Id: 320
+    Hex: '0x140'
+    Dir: C2S
+    Handler: 'sub_5A3E70'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 321
+    Hex: '0x141'
+    Dir: C2S
+    Handler: 'sub_5A3F20'
+    Fields: ['u16', 'str']
+    InDoc: false
+  - Id: 322
+    Hex: '0x142'
+    Dir: C2S
+    Handler: 'sub_5A4090'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 333
+    Hex: '0x14D'
+    Dir: C2S
+    Handler: 'sub_5A1C80'
+    Fields: []
+    InDoc: false
+  - Id: 334
+    Hex: '0x14E'
+    Dir: C2S
+    Handler: 'sub_5A2A90'
+    Fields: ['u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 341
+    Hex: '0x155'
+    Dir: C2S
+    Handler: 'sub_9E2710'
+    Fields: []
+    InDoc: false
+  - Id: 344
+    Hex: '0x158'
+    Dir: C2S
+    Handler: 'sub_5A49E0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 350
+    Hex: '0x15E'
+    Dir: C2S
+    Handler: 'sub_5A1EC0'
+    Fields: []
+    InDoc: false
+  - Id: 359
+    Hex: '0x167'
+    Dir: C2S
+    Handler: 'sub_5A1EA0'
+    Fields: []
+    InDoc: false
+  - Id: 362
+    Hex: '0x16A'
+    Dir: C2S
+    Handler: 'sub_5A1EB0'
+    Fields: []
+    InDoc: false
+  - Id: 373
+    Hex: '0x175'
+    Dir: C2S
+    Handler: 'sub_5A41F0'
+    Fields: ['u16', 'u32', 'u32', 'u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 374
+    Hex: '0x176'
+    Dir: C2S
+    Handler: 'sub_5A4300'
+    Fields: ['u16', 'u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 378
+    Hex: '0x17A'
+    Dir: C2S
+    Handler: 'sub_5A3FE0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 381
+    Hex: '0x17D'
+    Dir: C2S
+    Handler: 'sub_5A4140'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 383
+    Hex: '0x17F'
+    Dir: C2S
+    Handler: 'sub_5A43E0'
+    Fields: ['u16', 'u32', 'u32']
+    InDoc: false
+  - Id: 385
+    Hex: '0x181'
+    Dir: C2S
+    Handler: 'sub_A18030'
+    Fields: ['str']
+    InDoc: false
+  - Id: 388
+    Hex: '0x184'
+    Dir: C2S
+    Handler: 'sub_A180E0'
+    Fields: ['str']
+    InDoc: false
+  - Id: 391
+    Hex: '0x187'
+    Dir: C2S
+    Handler: 'sub_A16E70'
+    Fields: []
+    InDoc: false
+  - Id: 394
+    Hex: '0x18A'
+    Dir: C2S
+    Handler: 'sub_A16EA0'
+    Fields: []
+    InDoc: false
+  - Id: 397
+    Hex: '0x18D'
+    Dir: C2S
+    Handler: 'sub_A17F70'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 400
+    Hex: '0x190'
+    Dir: C2S
+    Handler: 'sub_A17DE0'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 403
+    Hex: '0x193'
+    Dir: C2S
+    Handler: 'sub_A17320'
+    Fields: []
+    InDoc: false
+  - Id: 404
+    Hex: '0x194'
+    Dir: C2S
+    Handler: 'sub_A17320'
+    Fields: []
+    InDoc: false
+  - Id: 405
+    Hex: '0x195'
+    Dir: C2S
+    Handler: 'sub_5A1C90'
+    Fields: []
+    InDoc: false
+  - Id: 407
+    Hex: '0x197'
+    Dir: C2S
+    Handler: 'sub_5A44B0'
+    Fields: ['u16', 'u32', 'u32']
+    InDoc: false
+  - Id: 411
+    Hex: '0x19B'
+    Dir: C2S
+    Handler: 'sub_5A3C10'
+    Fields: ['u16', 'u16', 'u16']
+    InDoc: false
+  - Id: 413
+    Hex: '0x19D'
+    Dir: C2S
+    Handler: 'sub_5A4650'
+    Fields: ['u16', 'u8', 'u16', 'u16', 'str', 'u8', 'u8', 'str']
+    InDoc: false
+  - Id: 416
+    Hex: '0x1A0'
+    Dir: C2S
+    Handler: 'sub_5A4830'
+    Fields: ['u16', 'str', 'u8', 'u8', 'str']
+    InDoc: false
+  - Id: 417
+    Hex: '0x1A1'
+    Dir: C2S
+    Handler: 'sub_5A1A50'
+    Fields: []
+    InDoc: false
+  - Id: 418
+    Hex: '0x1A2'
+    Dir: C2S
+    Handler: 'sub_A17EA0'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 427
+    Hex: '0x1AB'
+    Dir: C2S
+    Handler: 'sub_A16E80'
+    Fields: []
+    InDoc: false
+  - Id: 428
+    Hex: '0x1AC'
+    Dir: C2S
+    Handler: 'sub_A00100'
+    Fields: ['u8', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u8', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u16', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u8', 'u16', 'u16', 'u8', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u8', 'u16', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u8', 'u8', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 431
+    Hex: '0x1AF'
+    Dir: C2S
+    Handler: 'sub_9FFEA0'
+    Fields: ['u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u8', 'u16', 'u16', 'u8', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u8', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u16', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u8', 'u16', 'u16', 'u8', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u32', 'u16', 'u16', 'u8', 'u32', 'u8', 'u16', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u16', 'u16', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u8', 'u8', 'u16', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 434
+    Hex: '0x1B2'
+    Dir: C2S
+    Handler: 'sub_A188B0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 438
+    Hex: '0x1B6'
+    Dir: C2S
+    Handler: 'sub_A16FF0'
+    Fields: []
+    InDoc: false
+  - Id: 445
+    Hex: '0x1BD'
+    Dir: C2S
+    Handler: 'sub_A18960'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 446
+    Hex: '0x1BE'
+    Dir: C2S
+    Handler: 'sub_5A1E20'
+    Fields: []
+    InDoc: false
+  - Id: 448
+    Hex: '0x1C0'
+    Dir: C2S
+    Handler: 'sub_5A1ED0'
+    Fields: []
+    InDoc: false
+  - Id: 458
+    Hex: '0x1CA'
+    Dir: C2S
+    Handler: 'sub_5A4930'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 468
+    Hex: '0x1D4'
+    Dir: C2S
+    Handler: 'sub_5A4DE0'
+    Fields: ['u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 473
+    Hex: '0x1D9'
+    Dir: C2S
+    Handler: 'sub_5A3B60'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 477
+    Hex: '0x1DD'
+    Dir: C2S
+    Handler: 'sub_5A4EB0'
+    Fields: ['u16', 'u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 481
+    Hex: '0x1E1'
+    Dir: C2S
+    Handler: 'sub_5A1F10'
+    Fields: []
+    InDoc: false
+  - Id: 486
+    Hex: '0x1E6'
+    Dir: C2S
+    Handler: 'sub_5A4FA0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 489
+    Hex: '0x1E9'
+    Dir: C2S
+    Handler: 'sub_5A5050'
+    Fields: ['u16', 'u8']
+    InDoc: false
+  - Id: 492
+    Hex: '0x1EC'
+    Dir: C2S
+    Handler: 'sub_5A1F30'
+    Fields: []
+    InDoc: false
+  - Id: 496
+    Hex: '0x1F0'
+    Dir: C2S
+    Handler: 'sub_5A5110'
+    Fields: ['u16', 'u8', 'u8']
+    InDoc: false
+  - Id: 497
+    Hex: '0x1F1'
+    Dir: C2S
+    Handler: 'sub_5A5210'
+    Fields: ['u16', 'u8', 'u8', 'u8', 'str', 'u32', 'u8', 'u16']
+    InDoc: false
+  - Id: 503
+    Hex: '0x1F7'
+    Dir: C2S
+    Handler: 'sub_5A5380'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 505
+    Hex: '0x1F9'
+    Dir: C2S
+    Handler: 'sub_5A5430'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 511
+    Hex: '0x1FF'
+    Dir: C2S
+    Handler: 'sub_5A1EE0'
+    Fields: []
+    InDoc: false
+  - Id: 517
+    Hex: '0x205'
+    Dir: C2S
+    Handler: 'sub_5ABE90'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 520
+    Hex: '0x208'
+    Dir: C2S
+    Handler: 'sub_5ABF60'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 526
+    Hex: '0x20E'
+    Dir: C2S
+    Handler: 'sub_5A1E70'
+    Fields: []
+    InDoc: false
+  - Id: 533
+    Hex: '0x215'
+    Dir: C2S
+    Handler: 'sub_5A54E0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 536
+    Hex: '0x218'
+    Dir: C2S
+    Handler: 'sub_5A1F40'
+    Fields: []
+    InDoc: false
+  - Id: 544
+    Hex: '0x220'
+    Dir: C2S
+    Handler: 'sub_5A25E0'
+    Fields: []
+    InDoc: false
+  - Id: 547
+    Hex: '0x223'
+    Dir: C2S
+    Handler: 'sub_5A4780'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 560
+    Hex: '0x230'
+    Dir: C2S
+    Handler: 'sub_5A5590'
+    Fields: ['u16', 'u16']
+    InDoc: false
+  - Id: 569
+    Hex: '0x239'
+    Dir: C2S
+    Handler: 'sub_5A5700'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 579
+    Hex: '0x243'
+    Dir: C2S
+    Handler: 'sub_88BFE0'
+    Fields: []
+    InDoc: false
+  - Id: 598
+    Hex: '0x256'
+    Dir: C2S
+    Handler: 'sub_5A57B0'
+    Fields: ['u32', 'u32', 'u32', 'u16', 'u16']
+    InDoc: false
+  - Id: 614
+    Hex: '0x266'
+    Dir: C2S
+    Handler: 'sub_5A58B0'
+    Fields: ['u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 626
+    Hex: '0x272'
+    Dir: C2S
+    Handler: 'sub_5A3A00'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 639
+    Hex: '0x27F'
+    Dir: C2S
+    Handler: 'sub_5A1D70'
+    Fields: []
+    InDoc: false
+  - Id: 640
+    Hex: '0x280'
+    Dir: C2S
+    Handler: 'sub_5A2520'
+    Fields: []
+    InDoc: false
+  - Id: 642
+    Hex: '0x282'
+    Dir: C2S
+    Handler: 'sub_5A1D80'
+    Fields: []
+    InDoc: false
+  - Id: 643
+    Hex: '0x283'
+    Dir: C2S
+    Handler: 'sub_5A2560'
+    Fields: []
+    InDoc: false
+  - Id: 645
+    Hex: '0x285'
+    Dir: C2S
+    Handler: 'sub_5A1D90'
+    Fields: []
+    InDoc: false
+  - Id: 646
+    Hex: '0x286'
+    Dir: C2S
+    Handler: 'sub_5A25A0'
+    Fields: []
+    InDoc: false
+  - Id: 658
+    Hex: '0x292'
+    Dir: C2S
+    Handler: 'sub_5A1FE0'
+    Fields: []
+    InDoc: false
+  - Id: 669
+    Hex: '0x29D'
+    Dir: C2S
+    Handler: 'sub_5A5990'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 672
+    Hex: '0x2A0'
+    Dir: C2S
+    Handler: 'sub_5A1DA0'
+    Fields: []
+    InDoc: false
+  - Id: 673
+    Hex: '0x2A1'
+    Dir: C2S
+    Handler: 'sub_5A1DC0'
+    Fields: []
+    InDoc: false
+  - Id: 674
+    Hex: '0x2A2'
+    Dir: C2S
+    Handler: 'sub_5A1DE0'
+    Fields: []
+    InDoc: false
+  - Id: 686
+    Hex: '0x2AE'
+    Dir: C2S
+    Handler: 'sub_71A730'
+    Fields: ['str']
+    InDoc: false
+  - Id: 687
+    Hex: '0x2AF'
+    Dir: C2S
+    Handler: 'sub_71A0D0'
+    Fields: ['str', 'u16']
+    InDoc: false
+  - Id: 688
+    Hex: '0x2B0'
+    Dir: C2S
+    Handler: 'sub_71A510'
+    Fields: []
+    InDoc: false
+  - Id: 696
+    Hex: '0x2B8'
+    Dir: C2S
+    Handler: 'sub_5A5A60'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 699
+    Hex: '0x2BB'
+    Dir: C2S
+    Handler: 'sub_5A5B70'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 702
+    Hex: '0x2BE'
+    Dir: C2S
+    Handler: 'sub_5A2020'
+    Fields: []
+    InDoc: false
+  - Id: 704
+    Hex: '0x2C0'
+    Dir: C2S
+    Handler: 'sub_5A5C50'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 707
+    Hex: '0x2C3'
+    Dir: C2S
+    Handler: 'sub_96DC60'
+    Fields: []
+    InDoc: false
+  - Id: 713
+    Hex: '0x2C9'
+    Dir: C2S
+    Handler: 'sub_5A1A80'
+    Fields: []
+    InDoc: false
+  - Id: 721
+    Hex: '0x2D1'
+    Dir: C2S
+    Handler: 'sub_5A5D70'
+    Fields: ['u16', 'u8', 'u32', 'u8']
+    InDoc: false
+  - Id: 734
+    Hex: '0x2DE'
+    Dir: C2S
+    Handler: 'sub_5A5E80'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 737
+    Hex: '0x2E1'
+    Dir: C2S
+    Handler: 'sub_A43A40'
+    Fields: []
+    InDoc: false
+  - Id: 745
+    Hex: '0x2E9'
+    Dir: C2S
+    Handler: 'sub_5AD210'
+    Fields: ['u8', 'u8', 'u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 752
+    Hex: '0x2F0'
+    Dir: C2S
+    Handler: 'sub_5A5F70'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 759
+    Hex: '0x2F7'
+    Dir: C2S
+    Handler: 'sub_5A2050'
+    Fields: []
+    InDoc: false
+  - Id: 769
+    Hex: '0x301'
+    Dir: C2S
+    Handler: 'sub_5A6020'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 772
+    Hex: '0x304'
+    Dir: C2S
+    Handler: 'sub_BE4910'
+    Fields: []
+    InDoc: false
+  - Id: 785
+    Hex: '0x311'
+    Dir: C2S
+    Handler: 'sub_5A1B20'
+    Fields: []
+    InDoc: false
+  - Id: 790
+    Hex: '0x316'
+    Dir: C2S
+    Handler: 'sub_5A1B10'
+    Fields: []
+    InDoc: false
+  - Id: 791
+    Hex: '0x317'
+    Dir: C2S
+    Handler: 'sub_5AB5B0'
+    Fields: ['u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 794
+    Hex: '0x31A'
+    Dir: C2S
+    Handler: 'sub_5A1B30'
+    Fields: []
+    InDoc: false
+  - Id: 800
+    Hex: '0x320'
+    Dir: C2S
+    Handler: 'sub_5A6150'
+    Fields: ['u32', 'u32', 'str']
+    InDoc: false
+  - Id: 817
+    Hex: '0x331'
+    Dir: C2S
+    Handler: 'sub_5A6560'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 820
+    Hex: '0x334'
+    Dir: C2S
+    Handler: 'sub_5A6610'
+    Fields: ['u32', 'u32', 'u16', 'str']
+    InDoc: false
+  - Id: 823
+    Hex: '0x337'
+    Dir: C2S
+    Handler: 'sub_5A66F0'
+    Fields: ['u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 832
+    Hex: '0x340'
+    Dir: C2S
+    Handler: 'sub_5A67C0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 841
+    Hex: '0x349'
+    Dir: C2S
+    Handler: 'sub_5A6870'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 849
+    Hex: '0x351'
+    Dir: C2S
+    Handler: 'sub_5A6920'
+    Fields: ['u8', 'u16', 'u8', 'u16', 'u16']
+    InDoc: false
+  - Id: 858
+    Hex: '0x35A'
+    Dir: C2S
+    Handler: 'sub_5A62F0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 861
+    Hex: '0x35D'
+    Dir: C2S
+    Handler: 'sub_5A6450'
+    Fields: ['u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 864
+    Hex: '0x360'
+    Dir: C2S
+    Handler: 'sub_5A63A0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 880
+    Hex: '0x370'
+    Dir: C2S
+    Handler: 'sub_5A6AF0'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 883
+    Hex: '0x373'
+    Dir: C2S
+    Handler: 'sub_9CC0F0'
+    Fields: []
+    InDoc: false
+  - Id: 897
+    Hex: '0x381'
+    Dir: C2S
+    Handler: 'sub_5A6BD0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 900
+    Hex: '0x384'
+    Dir: C2S
+    Handler: 'sub_A479C0'
+    Fields: []
+    InDoc: false
+  - Id: 906
+    Hex: '0x38A'
+    Dir: C2S
+    Handler: 'sub_5A6C80'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'str', 'str']
+    InDoc: false
+  - Id: 909
+    Hex: '0x38D'
+    Dir: C2S
+    Handler: 'sub_8CACC0'
+    Fields: []
+    InDoc: false
+  - Id: 915
+    Hex: '0x393'
+    Dir: C2S
+    Handler: 'sub_5A6F40'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 918
+    Hex: '0x396'
+    Dir: C2S
+    Handler: 'sub_9D2970'
+    Fields: []
+    InDoc: false
+  - Id: 927
+    Hex: '0x39F'
+    Dir: C2S
+    Handler: 'sub_757630'
+    Fields: ['u32', 'u32', 'u16', 'u16', 'str', 'u8', 'u32', 'u8']
+    InDoc: false
+  - Id: 932
+    Hex: '0x3A4'
+    Dir: C2S
+    Handler: 'sub_5A74E0'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 939
+    Hex: '0x3AB'
+    Dir: C2S
+    Handler: 'sub_5A7310'
+    Fields: ['str']
+    InDoc: false
+  - Id: 965
+    Hex: '0x3C5'
+    Dir: C2S
+    Handler: 'sub_8AD430'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 968
+    Hex: '0x3C8'
+    Dir: C2S
+    Handler: 'sub_8AD660'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 971
+    Hex: '0x3CB'
+    Dir: C2S
+    Handler: 'sub_5A2190'
+    Fields: []
+    InDoc: false
+  - Id: 974
+    Hex: '0x3CE'
+    Dir: C2S
+    Handler: 'sub_5A21A0'
+    Fields: []
+    InDoc: false
+  - Id: 978
+    Hex: '0x3D2'
+    Dir: C2S
+    Handler: 'sub_5A7590'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 981
+    Hex: '0x3D5'
+    Dir: C2S
+    Handler: 'sub_9CEE70'
+    Fields: []
+    InDoc: false
+  - Id: 985
+    Hex: '0x3D9'
+    Dir: C2S
+    Handler: 'sub_5A76B0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 988
+    Hex: '0x3DC'
+    Dir: C2S
+    Handler: 'sub_9CEE70'
+    Fields: []
+    InDoc: false
+  - Id: 990
+    Hex: '0x3DE'
+    Dir: C2S
+    Handler: 'sub_5A2EF0'
+    Fields: ['str']
+    InDoc: false
+  - Id: 991
+    Hex: '0x3DF'
+    Dir: C2S
+    Handler: 'sub_5A1CE0'
+    Fields: []
+    InDoc: false
+  - Id: 992
+    Hex: '0x3E0'
+    Dir: C2S
+    Handler: 'sub_5A78D0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 995
+    Hex: '0x3E3'
+    Dir: C2S
+    Handler: 'sub_5A7980'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 998
+    Hex: '0x3E6'
+    Dir: C2S
+    Handler: 'sub_5A7A30'
+    Fields: ['u16', 'u32', 'u32']
+    InDoc: false
+  - Id: 1001
+    Hex: '0x3E9'
+    Dir: C2S
+    Handler: 'sub_5A7B00'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1017
+    Hex: '0x3F9'
+    Dir: C2S
+    Handler: 'sub_5A7FB0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1020
+    Hex: '0x3FC'
+    Dir: C2S
+    Handler: 'sub_5A6E20'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1025
+    Hex: '0x401'
+    Dir: C2S
+    Handler: 'sub_5A21B0'
+    Fields: []
+    InDoc: false
+  - Id: 1044
+    Hex: '0x414'
+    Dir: C2S
+    Handler: 'sub_5A8060'
+    Fields: ['str']
+    InDoc: false
+  - Id: 1047
+    Hex: '0x417'
+    Dir: C2S
+    Handler: 'sub_5A21C0'
+    Fields: []
+    InDoc: false
+  - Id: 1050
+    Hex: '0x41A'
+    Dir: C2S
+    Handler: 'sub_5A8110'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1056
+    Hex: '0x420'
+    Dir: C2S
+    Handler: 'sub_5A81C0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1058
+    Hex: '0x422'
+    Dir: C2S
+    Handler: 'sub_5A8270'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1061
+    Hex: '0x425'
+    Dir: C2S
+    Handler: 'sub_5A8320'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1077
+    Hex: '0x435'
+    Dir: C2S
+    Handler: 'sub_5A83D0'
+    Fields: []
+    InDoc: false
+  - Id: 1081
+    Hex: '0x439'
+    Dir: C2S
+    Handler: 'sub_5A8470'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 1084
+    Hex: '0x43C'
+    Dir: C2S
+    Handler: 'sub_5A8520'
+    Fields: ['u8', 'u8']
+    InDoc: false
+  - Id: 1087
+    Hex: '0x43F'
+    Dir: C2S
+    Handler: 'sub_5A85E0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1093
+    Hex: '0x445'
+    Dir: C2S
+    Handler: 'sub_852C60'
+    Fields: []
+    InDoc: false
+  - Id: 1099
+    Hex: '0x44B'
+    Dir: C2S
+    Handler: 'sub_8A6980'
+    Fields: []
+    InDoc: false
+  - Id: 1101
+    Hex: '0x44D'
+    Dir: C2S
+    Handler: 'sub_8A82E0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1110
+    Hex: '0x456'
+    Dir: C2S
+    Handler: 'sub_B6E700'
+    Fields: []
+    InDoc: false
+  - Id: 1119
+    Hex: '0x45F'
+    Dir: C2S
+    Handler: 'sub_5A86C0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1125
+    Hex: '0x465'
+    Dir: C2S
+    Handler: 'sub_5A8770'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 1139
+    Hex: '0x473'
+    Dir: C2S
+    Handler: 'sub_5A8FD0'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1140
+    Hex: '0x474'
+    Dir: C2S
+    Handler: 'sub_8A6A20'
+    Fields: ['u32', 'u32', 'u8', 'u8']
+    InDoc: false
+  - Id: 1151
+    Hex: '0x47F'
+    Dir: C2S
+    Handler: 'sub_5A8820'
+    Fields: ['u32', 'u32', 'u32', 'u16', 'u16']
+    InDoc: false
+  - Id: 1167
+    Hex: '0x48F'
+    Dir: C2S
+    Handler: 'sub_A962F0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u16', 'u16', 'u16', 'u16']
+    InDoc: false
+  - Id: 1168
+    Hex: '0x490'
+    Dir: C2S
+    Handler: 'sub_BB6830'
+    Fields: ['u32', 'str']
+    InDoc: false
+  - Id: 1176
+    Hex: '0x498'
+    Dir: C2S
+    Handler: 'sub_8A6B00'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1183
+    Hex: '0x49F'
+    Dir: C2S
+    Handler: 'sub_5A9080'
+    Fields: ['u32', 'u32', 'str']
+    InDoc: false
+  - Id: 1187
+    Hex: '0x4A3'
+    Dir: C2S
+    Handler: 'sub_5A9140'
+    Fields: []
+    InDoc: false
+  - Id: 1188
+    Hex: '0x4A4'
+    Dir: C2S
+    Handler: 'sub_5A9200'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1189
+    Hex: '0x4A5'
+    Dir: C2S
+    Handler: 'sub_5A2290'
+    Fields: []
+    InDoc: false
+  - Id: 1199
+    Hex: '0x4AF'
+    Dir: C2S
+    Handler: 'sub_9A6650'
+    Fields: ['u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u16', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32']
+    InDoc: false
+  - Id: 1201
+    Hex: '0x4B1'
+    Dir: C2S
+    Handler: 'sub_5A92B0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u16', 'u16', 'u8']
+    InDoc: false
+  - Id: 1203
+    Hex: '0x4B3'
+    Dir: C2S
+    Handler: 'sub_5A93D0'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 1207
+    Hex: '0x4B7'
+    Dir: C2S
+    Handler: 'sub_5A7050'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1210
+    Hex: '0x4BA'
+    Dir: C2S
+    Handler: 'sub_5A7130'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1216
+    Hex: '0x4C0'
+    Dir: C2S
+    Handler: 'sub_9CD9A0'
+    Fields: []
+    InDoc: false
+  - Id: 1219
+    Hex: '0x4C3'
+    Dir: C2S
+    Handler: 'sub_A18A10'
+    Fields: []
+    InDoc: false
+  - Id: 1222
+    Hex: '0x4C6'
+    Dir: C2S
+    Handler: 'sub_A18AB0'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1225
+    Hex: '0x4C9'
+    Dir: C2S
+    Handler: 'sub_A18B60'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1230
+    Hex: '0x4CE'
+    Dir: C2S
+    Handler: 'sub_5A9480'
+    Fields: ['u8', 'u8']
+    InDoc: false
+  - Id: 1233
+    Hex: '0x4D1'
+    Dir: C2S
+    Handler: 'sub_5A9540'
+    Fields: ['u8', 'u32']
+    InDoc: false
+  - Id: 1236
+    Hex: '0x4D4'
+    Dir: C2S
+    Handler: 'sub_5A9770'
+    Fields: ['u32', 'str', 'str']
+    InDoc: false
+  - Id: 1239
+    Hex: '0x4D7'
+    Dir: C2S
+    Handler: 'sub_5A9600'
+    Fields: ['u8', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1249
+    Hex: '0x4E1'
+    Dir: C2S
+    Handler: 'sub_851C60'
+    Fields: []
+    InDoc: false
+  - Id: 1257
+    Hex: '0x4E9'
+    Dir: C2S
+    Handler: 'sub_852A50'
+    Fields: ['u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8']
+    InDoc: false
+  - Id: 1265
+    Hex: '0x4F1'
+    Dir: C2S
+    Handler: 'sub_5A6210'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1269
+    Hex: '0x4F5'
+    Dir: C2S
+    Handler: 'sub_5A7210'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1275
+    Hex: '0x4FB'
+    Dir: C2S
+    Handler: 'sub_C695D0'
+    Fields: []
+    InDoc: false
+  - Id: 1283
+    Hex: '0x503'
+    Dir: C2S
+    Handler: 'sub_5A9AD0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1286
+    Hex: '0x506'
+    Dir: C2S
+    Handler: 'sub_5A99F0'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1289
+    Hex: '0x509'
+    Dir: C2S
+    Handler: 'sub_5A9940'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1292
+    Hex: '0x50C'
+    Dir: C2S
+    Handler: 'sub_BE55F0'
+    Fields: []
+    InDoc: false
+  - Id: 1295
+    Hex: '0x50F'
+    Dir: C2S
+    Handler: 'sub_5A9CE0'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1298
+    Hex: '0x512'
+    Dir: C2S
+    Handler: 'sub_5A9C30'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1301
+    Hex: '0x515'
+    Dir: C2S
+    Handler: 'sub_96E020'
+    Fields: []
+    InDoc: false
+  - Id: 1305
+    Hex: '0x519'
+    Dir: C2S
+    Handler: 'sub_5A9B80'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1309
+    Hex: '0x51D'
+    Dir: C2S
+    Handler: 'sub_5A9DC0'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 1311
+    Hex: '0x51F'
+    Dir: C2S
+    Handler: 'sub_5A9E90'
+    Fields: ['u32', 'u32', 'u16', 'u8']
+    InDoc: false
+  - Id: 1313
+    Hex: '0x521'
+    Dir: C2S
+    Handler: 'sub_5A9F80'
+    Fields: ['u32', 'u32', 'u16', 'u8']
+    InDoc: false
+  - Id: 1315
+    Hex: '0x523'
+    Dir: C2S
+    Handler: 'sub_5A22C0'
+    Fields: []
+    InDoc: false
+  - Id: 1317
+    Hex: '0x525'
+    Dir: C2S
+    Handler: 'sub_5A22D0'
+    Fields: []
+    InDoc: false
+  - Id: 1318
+    Hex: '0x526'
+    Dir: C2S
+    Handler: 'sub_9D6C40'
+    Fields: []
+    InDoc: false
+  - Id: 1320
+    Hex: '0x528'
+    Dir: C2S
+    Handler: 'sub_5AA060'
+    Fields: ['u8', 'u8', 'u16', 'u16', 'str']
+    InDoc: false
+  - Id: 1322
+    Hex: '0x52A'
+    Dir: C2S
+    Handler: 'sub_9D7300'
+    Fields: []
+    InDoc: false
+  - Id: 1327
+    Hex: '0x52F'
+    Dir: C2S
+    Handler: 'sub_9D6CB0'
+    Fields: []
+    InDoc: false
+  - Id: 1371
+    Hex: '0x55B'
+    Dir: C2S
+    Handler: 'sub_5A6A40'
+    Fields: ['u32']
+    InDoc: false
+  - Id: 1374
+    Hex: '0x55E'
+    Dir: C2S
+    Handler: 'sub_5AA270'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 1408
+    Hex: '0x580'
+    Dir: C2S
+    Handler: 'sub_5AA320'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 1411
+    Hex: '0x583'
+    Dir: C2S
+    Handler: 'sub_BEC820'
+    Fields: []
+    InDoc: false
+  - Id: 1414
+    Hex: '0x586'
+    Dir: C2S
+    Handler: 'sub_BEC840'
+    Fields: []
+    InDoc: false
+  - Id: 1418
+    Hex: '0x58A'
+    Dir: C2S
+    Handler: 'sub_5AA410'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1421
+    Hex: '0x58D'
+    Dir: C2S
+    Handler: 'sub_5AA4C0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1426
+    Hex: '0x592'
+    Dir: C2S
+    Handler: 'sub_5A2330'
+    Fields: []
+    InDoc: false
+  - Id: 1428
+    Hex: '0x594'
+    Dir: C2S
+    Handler: 'sub_5AA570'
+    Fields: ['u8', 'u32']
+    InDoc: false
+  - Id: 1432
+    Hex: '0x598'
+    Dir: C2S
+    Handler: 'sub_5A2340'
+    Fields: []
+    InDoc: false
+  - Id: 1434
+    Hex: '0x59A'
+    Dir: C2S
+    Handler: 'sub_5AA650'
+    Fields: ['u8', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1441
+    Hex: '0x5A1'
+    Dir: C2S
+    Handler: 'sub_5AA780'
+    Fields: ['u32', 'u32', 'u16', 'u32']
+    InDoc: false
+  - Id: 1442
+    Hex: '0x5A2'
+    Dir: C2S
+    Handler: 'sub_5AA860'
+    Fields: ['u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1445
+    Hex: '0x5A5'
+    Dir: C2S
+    Handler: 'sub_C79B90'
+    Fields: []
+    InDoc: false
+  - Id: 1446
+    Hex: '0x5A6'
+    Dir: C2S
+    Handler: 'sub_C79B90'
+    Fields: []
+    InDoc: false
+  - Id: 1449
+    Hex: '0x5A9'
+    Dir: C2S
+    Handler: 'sub_5AA930'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 1452
+    Hex: '0x5AC'
+    Dir: C2S
+    Handler: 'sub_5A2370'
+    Fields: []
+    InDoc: false
+  - Id: 1455
+    Hex: '0x5AF'
+    Dir: C2S
+    Handler: 'sub_5A2380'
+    Fields: []
+    InDoc: false
+  - Id: 1463
+    Hex: '0x5B7'
+    Dir: C2S
+    Handler: 'sub_5A2390'
+    Fields: []
+    InDoc: false
+  - Id: 1466
+    Hex: '0x5BA'
+    Dir: C2S
+    Handler: 'sub_5AA9E0'
+    Fields: ['u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1469
+    Hex: '0x5BD'
+    Dir: C2S
+    Handler: 'sub_5A23A0'
+    Fields: []
+    InDoc: false
+  - Id: 1472
+    Hex: '0x5C0'
+    Dir: C2S
+    Handler: 'sub_5AAAB0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1475
+    Hex: '0x5C3'
+    Dir: C2S
+    Handler: 'sub_5A23B0'
+    Fields: []
+    InDoc: false
+  - Id: 1478
+    Hex: '0x5C6'
+    Dir: C2S
+    Handler: 'sub_5AAC20'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 1481
+    Hex: '0x5C9'
+    Dir: C2S
+    Handler: 'sub_5A23C0'
+    Fields: []
+    InDoc: false
+  - Id: 1484
+    Hex: '0x5CC'
+    Dir: C2S
+    Handler: 'sub_5AAD80'
+    Fields: ['u32', 'u32', 'u16']
+    InDoc: false
+  - Id: 1485
+    Hex: '0x5CD'
+    Dir: C2S
+    Handler: 'sub_5A23D0'
+    Fields: []
+    InDoc: false
+  - Id: 1486
+    Hex: '0x5CE'
+    Dir: C2S
+    Handler: 'sub_5AAE50'
+    Fields: ['u16']
+    InDoc: false
+  - Id: 2000
+    Hex: '0x7D0'
+    Dir: C2S
+    Handler: 'sub_82B530'
+    Fields: ['u32', 'str', 'str', 'u32', 'u32', 'u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 2003
+    Hex: '0x7D3'
+    Dir: C2S
+    Handler: 'sub_82AF70'
+    Fields: ['str', 'str']
+    InDoc: false
+  - Id: 2006
+    Hex: '0x7D6'
+    Dir: C2S
+    Handler: 'sub_75C980'
+    Fields: ['str', 'u16', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8']
+    InDoc: false
+  - Id: 2009
+    Hex: '0x7D9'
+    Dir: C2S
+    Handler: 'sub_7275C0'
+    Fields: ['u32', 'u32', 'u8', 'str']
+    InDoc: false
+  - Id: 2012
+    Hex: '0x7DC'
+    Dir: C2S
+    Handler: 'sub_742D30'
+    Fields: ['u8', 'u32', 'u8']
+    InDoc: false
+  - Id: 2017
+    Hex: '0x7E1'
+    Dir: C2S
+    Handler: 'sub_5A1F50'
+    Fields: []
+    InDoc: false
+  - Id: 2028
+    Hex: '0x7EC'
+    Dir: C2S
+    Handler: 'sub_82AAF0'
+    Fields: []
+  - Id: 2037
+    Hex: '0x7F5'
+    Dir: C2S
+    Handler: 'sub_742E90'
+    Fields: ['u32', 'u32', 'u8']
+    InDoc: false
+  - Id: 2038
+    Hex: '0x7F6'
+    Dir: C2S
+    Handler: 'sub_74ED00'
+    Fields: ['u8', 'u8']
+    InDoc: false
+  - Id: 2040
+    Hex: '0x7F8'
+    Dir: C2S
+    Handler: 'sub_74ED30'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 2043
+    Hex: '0x7FB'
+    Dir: C2S
+    Handler: 'sub_74ED50'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 2046
+    Hex: '0x7FE'
+    Dir: C2S
+    Handler: 'sub_7504E0'
+    Fields: ['u32', 'u32', 'str', 'u8']
+    InDoc: false
+  - Id: 2062
+    Hex: '0x80E'
+    Dir: C2S
+    Handler: 'sub_82B760'
+    Fields: ['u32', 'str', 'u16', 'str']
+    InDoc: false
+  - Id: 2068
+    Hex: '0x814'
+    Dir: C2S
+    Handler: 'sub_7255D0'
+    Fields: []
+    InDoc: false
+  - Id: 2071
+    Hex: '0x817'
+    Dir: C2S
+    Handler: 'sub_743000'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 5505
+    Hex: '0x1581'
+    Dir: C2S
+    Handler: 'sub_82B6E0'
+    Fields: []
+  - Id: 5508
+    Hex: '0x1584'
+    Dir: C2S
+    Handler: 'sub_83D510'
+    Fields: ['u8']
+  - Id: 11106
+    Hex: '0x2B62'
+    Dir: C2S
+    Handler: 'sub_88C850'
+    Fields: []
+    InDoc: false
+  - Id: 11118
+    Hex: '0x2B6E'
+    Dir: C2S
+    Handler: 'sub_871CB0'
+    Fields: ['u8']
+  - Id: 11122
+    Hex: '0x2B72'
+    Dir: C2S
+    Handler: 'sub_8720D0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32']
+  - Id: 11124
+    Hex: '0x2B74'
+    Dir: C2S
+    Handler: 'sub_870B80'
+    Fields: ['u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u8']
+  - Id: 11128
+    Hex: '0x2B78'
+    Dir: C2S
+    Handler: 'sub_8721C0'
+    Fields: ['u16']
+  - Id: 11129
+    Hex: '0x2B79'
+    Dir: C2S
+    Handler: 'sub_870BB0'
+    Fields: ['u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u8']
+  - Id: 11133
+    Hex: '0x2B7D'
+    Dir: C2S
+    Handler: 'sub_888B20'
+    Fields: ['u32', 'u32', 'u32']
+  - Id: 11135
+    Hex: '0x2B7F'
+    Dir: C2S
+    Handler: 'sub_888BE0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 11137
+    Hex: '0x2B81'
+    Dir: C2S
+    Handler: 'sub_888CA0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 11139
+    Hex: '0x2B83'
+    Dir: C2S
+    Handler: 'sub_888D60'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 11142
+    Hex: '0x2B86'
+    Dir: C2S
+    Handler: 'sub_889C50'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 11144
+    Hex: '0x2B88'
+    Dir: C2S
+    Handler: 'sub_889DA0'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 11181
+    Hex: '0x2BAD'
+    Dir: C2S
+    Handler: 'sub_881500'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+  - Id: 11183
+    Hex: '0x2BAF'
+    Dir: C2S
+    Handler: 'sub_881320'
+    Fields: ['u32', 'u32', 'u8']
+  - Id: 11185
+    Hex: '0x2BB1'
+    Dir: C2S
+    Handler: 'sub_881410'
+    Fields: ['u32', 'u32', 'u8']
+  - Id: 11187
+    Hex: '0x2BB3'
+    Dir: C2S
+    Handler: 'sub_87E8F0'
+    Fields: []
+  - Id: 11189
+    Hex: '0x2BB5'
+    Dir: C2S
+    Handler: 'sub_8817C0'
+    Fields: ['u8']
+  - Id: 11191
+    Hex: '0x2BB7'
+    Dir: C2S
+    Handler: 'sub_8820B0'
+    Fields: []
+  - Id: 11193
+    Hex: '0x2BB9'
+    Dir: C2S
+    Handler: 'sub_882280'
+    Fields: ['u32', 'u32', 'u32', 'u32']
+  - Id: 11195
+    Hex: '0x2BBB'
+    Dir: C2S
+    Handler: 'sub_882380'
+    Fields: []
+  - Id: 11199
+    Hex: '0x2BBF'
+    Dir: C2S
+    Handler: 'sub_881930'
+    Fields: ['u32', 'u32', 'u32', 'u8']
+  - Id: 11202
+    Hex: '0x2BC2'
+    Dir: C2S
+    Handler: 'sub_882C30'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+  - Id: 11204
+    Hex: '0x2BC4'
+    Dir: C2S
+    Handler: 'sub_881610'
+    Fields: []
+  - Id: 11208
+    Hex: '0x2BC8'
+    Dir: C2S
+    Handler: 'sub_880040'
+    Fields: []
+  - Id: 11210
+    Hex: '0x2BCA'
+    Dir: C2S
+    Handler: 'sub_87ECE0'
+    Fields: []
+  - Id: 11212
+    Hex: '0x2BCC'
+    Dir: C2S
+    Handler: 'sub_87FFB0'
+    Fields: []
+  - Id: 11214
+    Hex: '0x2BCE'
+    Dir: C2S
+    Handler: 'sub_882EE0'
+    Fields: ['str']
+  - Id: 11216
+    Hex: '0x2BD0'
+    Dir: C2S
+    Handler: 'sub_8821B0'
+    Fields: ['str']
+  - Id: 11251
+    Hex: '0x2BF3'
+    Dir: C2S
+    Handler: 'sub_862400'
+    Fields: []
+  - Id: 11261
+    Hex: '0x2BFD'
+    Dir: C2S
+    Handler: 'sub_878C20'
+    Fields: ['u32', 'u32']
+  - Id: 11271
+    Hex: '0x2C07'
+    Dir: C2S
+    Handler: 'sub_860D80'
+    Fields: ['u32']
+  - Id: 11273
+    Hex: '0x2C09'
+    Dir: C2S
+    Handler: 'sub_860FA0'
+    Fields: []
+  - Id: 11275
+    Hex: '0x2C0B'
+    Dir: C2S
+    Handler: 'sub_8610E0'
+    Fields: ['u32', 'u32']
+  - Id: 11277
+    Hex: '0x2C0D'
+    Dir: C2S
+    Handler: 'sub_85E2A0'
+    Fields: ['u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u32', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u8', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+  - Id: 11279
+    Hex: '0x2C0F'
+    Dir: C2S
+    Handler: 'sub_8612B0'
+    Fields: ['u32']
+  - Id: 11311
+    Hex: '0x2C2F'
+    Dir: C2S
+    Handler: 'sub_8765C0'
+    Fields: ['u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 11316
+    Hex: '0x2C34'
+    Dir: C2S
+    Handler: 'sub_877640'
+    Fields: ['str']
+    InDoc: false
+  - Id: 11318
+    Hex: '0x2C36'
+    Dir: C2S
+    Handler: 'sub_877730'
+    Fields: ['u32', 'u32']
+    InDoc: false
+  - Id: 11321
+    Hex: '0x2C39'
+    Dir: C2S
+    Handler: 'sub_876660'
+    Fields: ['u8', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u32', 'u32', 'u8', 'u8', 'u8', 'u32', 'u32', 'u32', 'u32', 'u8', 'u32', 'u32', 'u32', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 11323
+    Hex: '0x2C3B'
+    Dir: C2S
+    Handler: 'sub_877830'
+    Fields: ['u8']
+    InDoc: false
+  - Id: 11326
+    Hex: '0x2C3E'
+    Dir: C2S
+    Handler: 'sub_877A90'
+    Fields: ['u8', 'u8', 'u32', 'u32']
+    InDoc: false
+  - Id: 11331
+    Hex: '0x2C43'
+    Dir: C2S
+    Handler: 'sub_8761A0'
+    Fields: ['u32', 'u32']
+  - Id: 11335
+    Hex: '0x2C47'
+    Dir: C2S
+    Handler: 'sub_8762A0'
+    Fields: ['str', 'str']
+  - Id: 11337
+    Hex: '0x2C49'
+    Dir: C2S
+    Handler: 'sub_876460'
+    Fields: ['str']
+    InDoc: false
+  - Id: 11339
+    Hex: '0x2C4B'
+    Dir: C2S
+    Handler: 'sub_876360'
+    Fields: ['str']
+    InDoc: false
+  - Id: 11351
+    Hex: '0x2C57'
+    Dir: C2S
+    Handler: 'sub_86FF10'
+    Fields: ['str']
+  - Id: 11353
+    Hex: '0x2C59'
+    Dir: C2S
+    Handler: 'sub_86FFC0'
+    Fields: ['u32']
+  - Id: 11356
+    Hex: '0x2C5C'
+    Dir: C2S
+    Handler: 'sub_870430'
+    Fields: ['u32']
+  - Id: 11357
+    Hex: '0x2C5D'
+    Dir: C2S
+    Handler: 'sub_8704E0'
+    Fields: ['u32', 'u32', 'u32', 'u32', 'u32']
+  - Id: 11401
+    Hex: '0x2C89'
+    Dir: C2S
+    Handler: 'c2s_field_enter_11401'
+    Fields: ['u8']
+  - Id: 11404
+    Hex: '0x2C8C'
+    Dir: C2S
+    Handler: 'sub_893850'
+    Fields: ['u32', 'str']
+  - Id: 11410
+    Hex: '0x2C92'
+    Dir: C2S
+    Handler: 'sub_92B8C0'
+    Fields: []
+  - Id: 11413
+    Hex: '0x2C95'
+    Dir: C2S
+    Handler: 'c2s_field_leave_11413'
+    Fields: ['u32', 'str']
+  - Id: 11416
+    Hex: '0x2C98'
+    Dir: C2S
+    Handler: 'c2s_field_move_toggle_11416'
+    Fields: ['u8']
+  - Id: 11419
+    Hex: '0x2C9B'
+    Dir: C2S
+    Handler: 'sub_B12840'
+    Fields: []
+  - Id: 11430
+    Hex: '0x2CA6'
+    Dir: C2S
+    Handler: 'sub_893910'
+    Fields: ['str']
+    InDoc: false
+  - Id: 11433
+    Hex: '0x2CA9'
+    Dir: C2S
+    Handler: 'sub_893C00'
+    Fields: ['str']
+    InDoc: false
+  - Id: 11437
+    Hex: '0x2CAD'
+    Dir: C2S
+    Handler: 'c2s_field_teleport_11437'
+    Fields: ['u8', 'u32']
+  - Id: 11442
+    Hex: '0x2CB2'
+    Dir: C2S
+    Handler: 'sub_88E2C0'
+    Fields: []
+  - Id: 11446
+    Hex: '0x2CB6'
+    Dir: C2S
+    Handler: 'sub_88E2E0'
+    Fields: []
+  - Id: 11501
+    Hex: '0x2CED'
+    Dir: C2S
+    Handler: 'sub_82ADB0'
+    Fields: ['u32', 'u8', 'u8']
+    InDoc: false
+  - Id: 11505
+    Hex: '0x2CF1'
+    Dir: C2S
+    Handler: 'sub_72F200'
+    Fields: ['u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 65001
+    Hex: '0xFDE9'
+    Dir: C2S
+    Handler: 'sub_5A4C40'
+    Fields: ['u16', 'u32', 'u32', 'u16', 'u32', 'u32', 'u32']
+    InDoc: false
+  - Id: 65002
+    Hex: '0xFDEA'
+    Dir: C2S
+    Handler: 'sub_5A73C0'
+    Fields: ['u32']
+    InDoc: false
+
+# ---- Char-select / account (MasterServer; CCMD = client<->master) ----
+  - Id: 2009
+    Hex: '0x07D9'
+    Dir: C2S
+    Name: 'DELETE_CHAR'
+    Handler: 'OnCCmdDelete (MasterServer sub_51D290)'
+    Fields: ['u16', 'i64', 'str']
+    Note: 'Char-delete request at char-select. Reads u16, i64 charUid, str (verified via MasterServer readers). Opcode 0x07D9 per client/other-agent analysis.'
+  - Id: 2010
+    Hex: '0x07DA'
+    Dir: S2C
+    Name: 'CHAR_RESULT_MSG'
+    Handler: 'client NCST sub_760E40 case 2010'
+    Len: fixed
+    Fields: ['u32']
+    Note: 'CLIENT-FACING delete/char result. Reads u32 code (sub_6EB0B0) -> NetworkErrorString table (sub_C02E70) -> shows a message (sub_75C040). SAME path as create-fail 0x7D7. It ONLY displays a message - it does NOT remove a card. The deleted card disappears via CHAR-LIST RELOAD (deleted char absent when the list is re-fetched), NOT via this packet. NOTE: MasterServer internal CCMD_DELETE_ACK_OK is 0x0E31 (3633) - a gateway maps it; the client has NO handler for 0x0E31.'
+  - Id: 2008
+    Hex: '0x07D8'
+    Dir: S2C
+    Name: 'CREATE_CHAR_OK'
+    Handler: 'client NCST sub_760E40 -> sub_724CC0'
+    Len: var
+    Fields: []
+    Note: 'Create-ok: client ADDS one card incrementally (sub_724CC0) + "ui_char_create_ok". This is the only incremental card op; there is NO incremental remove-card. Card removal on delete = reload the char list.'
+  - Id: 2007
+    Hex: '0x07D7'
+    Dir: S2C
+    Name: 'CREATE_CHAR_FAIL'
+    Handler: 'client NCST sub_760E40 case 2007'
+    Len: fixed
+    Fields: ['u32']
+    Note: 'Create-fail: u32 code -> NetworkErrorString message (same as 0x7DA).'
+
+Footer:
+  Imports:
+#  - Path: db/import/packets_db.yml
